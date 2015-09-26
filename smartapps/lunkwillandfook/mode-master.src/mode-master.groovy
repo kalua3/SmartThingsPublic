@@ -14,15 +14,20 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
-
 preferences {
-	page(name: "page1", title: "Mode and Switches", nextPage: "page2", uninstall: true) {
+	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
     	section() {
-        	input(name: "triggerMode", type: "mode", title: "Triggered by Mode?", multiple: false, required: true)
-            input(name: "selectedSwitches", type: "capability.switch", title: "Switches to Set?", multiple: true, required: true)
+        	paragraph "Welcome. This app will let you configure dimming levels per-switch that will be set when the location changes to a specific mode. Just name this configuration, select a mode, select your switches, and select the levels you want to set. You can then create a routine in the SmartThings app to change the location mode." 
+    		label title: "Assign a name", required: false
+        }
+    }
+	page(name: "page2", title: "Mode and Switches", nextPage: "page3", uninstall: true) {
+    	section() {
+        	input(name: "triggerMode", type: "mode", title: "Set for specific mode", multiple: false, required: true)
+            input(name: "selectedSwitches", type: "capability.switch", title: "Set these switches", multiple: true, required: true)
 	    }
 	}
-    page(name: "page2", title: "Switch Levels", uninstall: true, install: true)
+    page(name: "page3", title: "Switch Levels", uninstall: true, install: true)
 }
 
 def page2() {
