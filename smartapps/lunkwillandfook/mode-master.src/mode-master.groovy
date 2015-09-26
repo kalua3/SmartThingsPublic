@@ -5,7 +5,7 @@
  *
  */
 definition(
-    name: "Mode-Master",
+    name: "Mode Master",
     namespace: "LunkwillAndFook",
     author: "Jeremy Huckeba",
     description: "Enables advanced automatic dimming and switching when the mode changes for up to 20 devices.",
@@ -27,17 +27,23 @@ preferences {
             input(name: "selectedSwitches", type: "capability.switch", title: "Set these switches", multiple: true, required: true)
 	    }
 	}
-    page(name: "page3", title: "Switch Levels", uninstall: true, install: true)
+    page(name: "page3", title: "Switch Levels", uninstall: true, nextPage: "page4")
+	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
+    	section() {
+        	input(name: "setMode", type: "mode", title: "Then set this mode", multiple: false, required: false)
+	    }
+	}
 }
 
-def page2() {
-	dynamicPage(name: "page2") {
+def page3() {
+	dynamicPage(name: "page3") {
     	section() {
         	def i = 0
             selectedSwitches.each { selectedSwitch ->
             	if(i < 20) {
                 	def inputName = "switchLevel$i"
                     input(name: inputName, type: "enum", title: selectedSwitch.label, multiple: false, required: true, options: getSwitchLevelOptions(selectedSwitch))
+                    i++
                 }
             }
         }
@@ -73,12 +79,13 @@ def initialize() {
 
 def modeChangeHandler(evt){
 	log.debug "Updated with mode: ${evt}"
-    if(evt.Value == triggerMode) {
+    if(evt.value == triggerMode) {
     	def i = 0;
     	selectedSwitches.each { selectedSwitch -> 
         	if(i < 20) {
         		setSwitchLevel(selectedSwitch, i)
             }
+            i++
         }
     }
 }
@@ -93,6 +100,10 @@ private setSwitchLevel(selectedSwitch, levelIndex) {
         } else {
         	selectedSwitch.off()
         }
+    }
+    
+    if(setMode != null) {
+    	location.setMode(setMode)
     }
 }
 
