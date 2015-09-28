@@ -30,22 +30,46 @@ preferences {
         	input(name: "isRunForNext24Hours", type: "bool", title: "Run for next 24 hours?")
         }
 		section("Switch settings") {
-        	input(name: "selectedSwitch", type: "capability:switch", title: "Select the switches to trigger...", required: true, multiple: true)
+        	input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
 			def timeLabel = timeIntervalLabel()
-			href(name: "timeIntervalInput", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
+			href(name: "timeIntervalInput", page: "pageTimeInterval", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
 			input(name: "days", type: "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
 			input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
         	input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
 		}
 	}
     page(name: "page2")
-	page(name: "timeIntervalInput", title: "Only during a certain time...")
-    {
-		section
-        {
-			input "startingTime", "time", title: "Starting", required: false
-			input "endingTime", "time", title: "Ending", required: false
-		}
+	page(name: "pageTimeInterval", title: "Only during a certain time...") {
+    	section(hidden: hideStartAtSunriseSection(), hideable: true){
+        	input(name: "isStartAtSunrise", type: "bool", title: "Start at sunrise")
+        }
+    	section(hidden: hideStartAtSunlightSection(), hideable: true){
+        	input(name: "isStartAtSunlight", type: "bool", title: "Start at sunlight")
+        }
+    	section(hidden: hideStartAtSunsetSection(), hideable: true){
+        	input(name: "isStartAtSunset", type: "bool", title: "Start at sunset")
+        }
+    	section(hidden: hideStartAtDarkSection(), hideable: true){
+        	input(name: "isStartAtDark", type: "bool", title: "Start at dark")
+        }
+    	section() {
+        	input(name: "startAtTime", type: "time", title: "Start at time", required: false)
+        }
+    	section(hidden: hideEndAtSunriseSection(), hideable: true){
+        	input(name: "isEndAtSunrise", type: "bool", title: "End at sunrise")
+        }
+    	section(hidden: hideEndAtSunlightSection(), hideable: true){
+        	input(name: "isEndAtSunlight", type: "bool", title: "End at sunlight")
+        }
+    	section(hidden: hideEndAtSunsetSection(), hideable: true){
+        	input(name: "isEndAtSunset", type: "bool", title: "End at sunset")
+        }
+    	section(hidden: hideEndAtDarkSection(), hideable: true){
+        	input(name: "isEndAtDark", type: "bool", title: "End at dark")
+        }
+    	section() {
+        	input(name: "endAtTime", type: "time", title: "End at time", required: false)
+        }
 	}
 }
 
@@ -94,5 +118,45 @@ def initialize() {
 
 private timeIntervalLabel()
 {
-	(startingTime && endingTime) ? hhmm(startingTime) + "-" + hhmm(endingTime, "h:mm a z") : ""
+	(startAtTime && endAtTime) ? hhmm(startAtTime) + "-" + hhmm(endAtTime, "h:mm a z") : ""
+}
+
+private hideStartAtSunriseSection() {
+	isEndAtSunrise || isStartAtSunlight || isStartAtSunset || isStartAtDark
+}
+
+private hideStartAtSunlightSection() {
+	isEndAtSunlight || isStartAtSunrise || isStartAtSunset || isStartAtDark
+}
+
+private hideStartAtSunsetSection() {
+	isEndAtSunset || isStartAtSunrise || isStartAtSunlight || isStartAtDark
+}
+
+private hideStartAtDarkSection() {
+	isEndAtDark || isStartAtSunrise || isStartAtSunlight || isStartAtSunset
+}
+
+private hideStartAtTime() {
+	isEndAtDark || isStartAtSunrise || isStartAtSunlight || isStartAtSunset
+}
+
+private hideEndAtSunriseSection() {
+	isStartAtSunrise || isEndAtSunlight || isEndAtSunset || isEndAtDark
+}
+
+private hideEndAtSunlightSection() {
+	isStartAtSunlight || isEndAtSunrise || isEndAtSunset || isEndAtDark
+}
+
+private hideEndAtSunsetSection() {
+	isStartAtSunset || isEndAtSunrise || isEndAtSunlight || isEndAtDark
+}
+
+private hideEndAtDarkSection() {
+	isStartAtDark || isEndAtSunrise || isEndAtSunlight || isEndAtSunset
+}
+
+private hideEndAtTime() {
+	isStartAtDark || isEndAtSunrise || isEndAtSunlight || isEndAtSunset
 }
