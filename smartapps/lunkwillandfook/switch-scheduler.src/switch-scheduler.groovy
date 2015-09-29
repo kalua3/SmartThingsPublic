@@ -43,16 +43,21 @@ preferences {
 }
 
 def pageIntervalOptions1() {
-	dynamicPage(name: "pageIntervalOptions1", title: "Only during a certain time...", nextPage: "pageIntervalOptions2") {
+	dynamicPage(name: "pageIntervalOptions1", title: "Only during a certain time...", nextPage: "pageIntervalOptions2", install: false, uninstall: false) {
     	section() {
         	input(name: "startAt", type: "enum", title: "Start at...", required: true, options: getStartAtOptions(), submitOnChange: true)
         	input(name: "endAt", type: "enum", title: "End at...", required: true, options: getEndAtOptions(), submitOnChange: true)            
         }
+        
+        section ("Zip code (optional, defaults to location coordinates when location services are enabled)...")
+        {
+            input "zipCode", "text", title: "Zip Code?", required: false, description: "Local Zip Code"
+        }
     }
 }
 
-def pageEndAtIntervalOptions() {
-	dynamicPage(name: "pageIntervalOptions2", title: "Only during a certain time...") {
+def pageIntervalOptions2() {
+	dynamicPage(name: "pageIntervalOptions2", title: "Only during a certain time...", install: false, uninstall: false) {
     	section() {
             log.trace "Start Type: ${startAt}"
             
@@ -83,7 +88,6 @@ def pageEndAtIntervalOptions() {
         }    	
     }
 }
-
 
 def page2() {
 	dynamicPage(name: "page2", title: "Switch Levels", uninstall: true, install: true) {
@@ -161,4 +165,12 @@ private getEndAtOptions() {
     }
     
     return ["Sunrise", "Sunset", "Specific Time"]
+}
+
+def astroCheck()
+{
+	def s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: sunriseOffset, sunsetOffset: sunsetOffset)
+	state.riseTime = s.sunrise.time
+	state.setTime = s.sunset.time
+	log.debug "Sunrise: ${new Date(state.riseTime)}($state.riseTime), Sunset: ${new Date(state.setTime)}($state.setTime)"
 }
