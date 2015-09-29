@@ -23,11 +23,38 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
+def isInstalled = false
+
 preferences {
 	page(name: "page1", title: "Configuration...", uninstall: true, install: false, nextPage: "page2") {
-    	section("24 Hour Mode") {
-        	input(name: "isRunForNext24Hours", type: "bool", title: "Run for next 24 hours?")
+
+	}
+    page(name: "page2")
+	page(name: "pageIntervalOptions1")
+    page(name: "pageIntervalOptions2")
+}
+
+def page1() {
+	dynamicPage(name: "page1", title: "Schedule...", nextPage: getFirstPageNextPage(), install: true, uninstall: true) {
+    	if(isInstalled) {
+            section("24 Hour Mode") {
+                input(name: "isRunForNext24Hours", type: "bool", title: "Run for next 24 hours?")
+            }
+        } else {
+            section("Switch settings") {
+                input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
+                def timeLabel = timeIntervalLabel()
+                href(name: "timeIntervalInput", page: "pageIntervalOptions1", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
+                input(name: "days", type: "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+                input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
+                input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
+            }
         }
+    }
+}
+
+def page1a() {
+	dynamicPage(name: "page1a", title: "Schedule...", nextPage: "page2", install: true, uninstall: true) {
 		section("Switch settings") {
         	input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
 			def timeLabel = timeIntervalLabel()
@@ -36,10 +63,7 @@ preferences {
 			input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
         	input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
 		}
-	}
-    page(name: "page2")
-	page(name: "pageIntervalOptions1")
-    page(name: "pageIntervalOptions2")
+    }
 }
 
 def pageIntervalOptions1() {
@@ -47,11 +71,6 @@ def pageIntervalOptions1() {
     	section() {
         	input(name: "startAt", type: "enum", title: "Start at...", required: true, options: getStartAtOptions(), submitOnChange: true)
         	input(name: "endAt", type: "enum", title: "End at...", required: true, options: getEndAtOptions(), submitOnChange: true)            
-        }
-        
-        section ("Zip code (optional, defaults to location coordinates when location services are enabled)...")
-        {
-            input "zipCode", "text", title: "Zip Code?", required: false, description: "Local Zip Code"
         }
     }
 }
@@ -63,26 +82,30 @@ def pageIntervalOptions2() {
             
             switch(startAt) {
                 case "Sunrise":
-                	input(name: "startAtSunriseOffset", type: "int", title: "Start how many minutes after sunrise?", required: false)
+                	input(name: "startAtSunriseOffsetDir", type: "enum", title: "Before or after?", required: false, metadata: [values: ["Before","After"]])
+                	input(name: "startAtSunriseOffsetValue", type: "int", title: "Sunrise offset?", required: false)
                 	break;
                 case "Sunset":
-               		input(name: "startAtSunsetOffset", type: "int", title: "Start how many minutes after sunset?", required: false)
+					input(name: "startAtSunsetOffsetDir", type: "enum", title: "Before or after?", required: false, metadata: [values: ["Before","After"]])
+               		input(name: "startAtSunsetOffsetValue", type: "int", title: "Sunset offset?", required: false)
                 	break;
                 case "Specific Time":
-                	input(name: "startAtTime", type: "time", title: "Start at time", required: isStartAtTimeRequired())
+                	input(name: "startAtTime", type: "time", title: "Start at time?", required: isStartAtTimeRequired())
                 	break;
             }
             
             log.trace "End Type: ${endAt}"
             switch(endAt) {
                 case "Sunrise":
-                	input(name: "endAtSunriseOffset", type: "int", title: "End how many minutes after sunrise?", required: false)
+					input(name: "endAtSunriseOffsetDir", type: "enum", title: "Before or after?", required: false, metadata: [values: ["Before","After"]])
+                	input(name: "endAtSunriseOffsetValue", type: "int", title: "Sunrise offset?", required: false)
                 	break;
                 case "Sunset":
-                	input(name: "endAtSunsetOffset", type: "int", title: "End how many minutes after sunset?", required: false)
+					input(name: "endAtSunsetOffsetDir", type: "enum", title: "Before or after?", required: false, metadata: [values: ["Before","After"]])
+                	input(name: "endAtSunsetOffsetValue", type: "int", title: "Sunset offset?", required: false)
                 	break;
                 case "Specific Time":
-                	input(name: "endAtTime", type: "time", title: "End at time", required: isEndAtTimeRequired())
+                	input(name: "endAtTime", type: "time", title: "End at time?", required: isEndAtTimeRequired())
                 	break;
             }
         }    	
@@ -116,7 +139,8 @@ private getSwitchLevelOptions(selectedSwitch) {
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
-
+	
+    isInstalled = true
 	initialize()
 }
 
@@ -124,13 +148,64 @@ def updated() {
 	log.debug "Updated with settings: ${settings}"
 
 	unsubscribe()
+	unschedule()
 	initialize()
 }
 
-def initialize() {
-	// TODO: subscribe to attributes, devices, locations, etc.
+def initialize() {  
+    subscribe(location, "sunsetTime", sunsetTimeHandler)
+    subscribe(location, "sunriseTime", sunriseTimeHandler)
+    
   	if(isTriggerOnModeChange) {
     	
+    }
+    
+    updateSchedule()
+}
+
+def sunriseTimeHandler(evt) {
+	updateSchedule()
+}
+
+def sunsetTimeHandler(evt) {
+	updateSchedule()
+}
+
+def startHandler(evt) {
+
+}
+
+def endHandler(evt) {
+	if(!isInstalled) {
+    
+    }
+}
+
+def modeHandler(evt) {
+
+}
+
+private getFirstPageNextPage() {
+	isInstalled == true ? "page1a" : "page2"
+}
+
+private updateSchedule() {
+	astroCheck()
+    
+    if(startAt == "Sunrise") {
+    	schedule(state.riseTime, startHandler)
+    } else if(startAt == "Sunset") {
+    	schedule(state.setTime, startHandler)
+    } else if(startAt == "Specific Time") {
+    	schedule(startAtTime, startHandler)
+    }
+    
+    if(endAt == "Sunrise") {
+    	schedule(state.riseTime, endHandler)
+    } else if(endAt == "Sunset") {
+    	schedule(state.setTime, endHandler)
+    } else if(endAt == "Specific Time") {
+    	schedule(endAtTime, endHandler)
     }
 }
 
@@ -169,8 +244,24 @@ private getEndAtOptions() {
 
 def astroCheck()
 {
-	def s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: sunriseOffset, sunsetOffset: sunsetOffset)
+	def sunriseOffset = null
+    def sunsetOffset = null
+    
+    if(startAt == "Sunrise") {    	
+    	sunriseOffset = startAtSunriseOffsetValue ? (startAtSunriseOffsetDir == "Before" ? "-$startAtSunriseOffsetValue" : startAtSunriseOffsetValue) : null
+    } else if(startAt == "Sunset") {
+    	sunsetOffset = startAtSunsetOffsetValue ? (startAtSunsetOffsetDir == "Before" ? "-$startAtSunsetOffsetValue" : startAtSunsetOffsetValue) : null
+    }
+    
+    if(endAt == "Sunrise") {    	
+    	sunriseOffset = endAtSunriseOffsetValue ? (endAtSunriseOffsetDir == "Before" ? "-$endAtSunriseOffsetValue" : endAtSunriseOffsetValue) : null
+    } else if(startAt == "Sunset") {
+    	sunsetOffset = endAtSunsetOffsetValue ? (endAtSunsetOffsetDir == "Before" ? "-$endAtSunsetOffsetValue" : endAtSunsetOffsetValue) : null
+    }
+
+	def s = getSunriseAndSunset(zipCode: location.zipCode, sunriseOffset: sunriseOffset, sunsetOffset: sunsetOffset)
 	state.riseTime = s.sunrise.time
 	state.setTime = s.sunset.time
-	log.debug "Sunrise: ${new Date(state.riseTime)}($state.riseTime), Sunset: ${new Date(state.setTime)}($state.setTime)"
+	log.debug "Sunrise with offset: ${new Date(state.riseTime)}($state.riseTime), Sunset with offset: ${new Date(state.setTime)}($state.setTime)"
 }
+
