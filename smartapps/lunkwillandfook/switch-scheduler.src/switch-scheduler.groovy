@@ -23,45 +23,54 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
-def isInstalled = false
-
 preferences {
-	page(name: "page1", title: "Configuration...", uninstall: true, install: false, nextPage: "page2") {
-
-	}
+	page(name: "page1")
+    page(name: "page1a")
     page(name: "page2")
 	page(name: "pageIntervalOptions1")
     page(name: "pageIntervalOptions2")
 }
 
 def page1() {
-	dynamicPage(name: "page1", title: "Schedule...", nextPage: getFirstPageNextPage(), install: true, uninstall: true) {
-    	if(isInstalled) {
+	dynamicPage(name: "page1", title: getFirstPageTitle(), nextPage: getFirstPageNextPage(), install: false, uninstall: true) {
+    	if(state.isInstalled) {
             section("24 Hour Mode") {
                 input(name: "isRunForNext24Hours", type: "bool", title: "Run for next 24 hours?")
             }
         } else {
             section("Switch settings") {
-                input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
-                def timeLabel = timeIntervalLabel()
+                input(name: "selectedSwitches", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
+            }
+            section("Timing") {
+            	def timeLabel = timeIntervalLabel()
                 href(name: "timeIntervalInput", page: "pageIntervalOptions1", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
                 input(name: "days", type: "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-                input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
-                input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
+			}
+            section("Modes") {
+                input(name: "startModes", type: "mode", title: "Only start when mode is:", multiple: true, required: false)
+            	input(name: "endModes", type: "mode", title: "Only end when mode is:", multiple: true, required: false)
+                input(name: "isTriggerStartOnModeChange", type: "bool", title: "Start if mode changes to one of the selected start modes within the interval.")
+                input(name: "isTriggerEndOnModeChange", type: "bool", title: "End if mode changes to one of the selected end modes outside of the interval.")
             }
         }
     }
 }
 
 def page1a() {
-	dynamicPage(name: "page1a", title: "Schedule...", nextPage: "page2", install: true, uninstall: true) {
+	dynamicPage(name: "page1a", title: "Schedule...", nextPage: "page2", install: false, uninstall: true) {
 		section("Switch settings") {
-        	input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
+        	input(name: "selectedSwitches", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
+		}
+        section("Timing") {
 			def timeLabel = timeIntervalLabel()
 			href(name: "timeIntervalInput", page: "pageIntervalOptions1", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
 			input(name: "days", type: "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-			input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
-        	input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
+		}
+        section("Modes") {
+            input(name: "startModes", type: "mode", title: "Only start when mode is:", multiple: true, required: false)
+            input(name: "endModes", type: "mode", title: "Only end when mode is:", multiple: true, required: false)
+            input(name: "isTriggerStartOnModeChange", type: "bool", title: "Start if mode changes to one of the selected start modes within the interval.")
+            input(name: "isTriggerEndOnModeChange", type: "bool", title: "End if mode changes to one of the selected end modes outside of the interval.")
 		}
     }
 }
@@ -127,20 +136,10 @@ def page2() {
     }
 }
 
-private getSwitchLevelOptions(selectedSwitch) {
-	if(selectedSwitch.hasCommand("setLevel")) {
-    	// dimmable switch options
-        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "On" ]
-    } else {
-    	// relay switch options
-        return ["Off", "On" ]
-    }
-}
-
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 	
-    isInstalled = true
+    state.isInstalled = true
 	initialize()
 }
 
@@ -156,8 +155,8 @@ def initialize() {
     subscribe(location, "sunsetTime", sunsetTimeHandler)
     subscribe(location, "sunriseTime", sunriseTimeHandler)
     
-  	if(isTriggerOnModeChange) {
-    	
+  	if(isTriggerStartOnModeChange || isTriggerEndOnModeChange) {
+    	subscribe(location, "mode", modeChangeHandler)
     }
     
     updateSchedule()
@@ -172,21 +171,66 @@ def sunsetTimeHandler(evt) {
 }
 
 def startHandler(evt) {
-
+	
 }
 
 def endHandler(evt) {
-	if(!isInstalled) {
-    
+	if(state.isRunning == true) {
+		if(checkRunEnd()) {
+        	runEnd()
+        }
     }
 }
 
-def modeHandler(evt) {
+private runEnd() {
+	state.isRunning = false
+}
 
+private checkRunEnd() {
+	if(state.isRunning == true && checkEndSchedule() == true) {
+        if(!isRunForNext24Hours) {
+            if(endModes.contains(location.currentMode)) {
+				return true
+            }
+        } else {
+            isRunForNext24Hours = false
+        }
+    }
+    
+    return false
+}
+
+private checkEndSchedule() {
+	def result = false
+    
+    ////if(hhmm(new Date(), "HH") == hhmm(
+    ////def mf = new java.text.SimpleDateFormat("mm")
+}
+
+def modeHandler(evt) {
+	
+}
+
+private getFirstPageTitle() {
+	if(state.isInstalled) {
+    	return "Configuration..."
+    } else {
+    	return "Schedule..."
+    }
+}
+
+private getSwitchLevelOptions(selectedSwitch) {
+	if(selectedSwitch.hasCommand("setLevel")) {
+    	// dimmable switch options
+        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "On" ]
+    } else {
+    	// relay switch options
+        return ["Off", "On" ]
+    }
 }
 
 private getFirstPageNextPage() {
-	isInstalled == true ? "page1a" : "page2"
+	state.isInstalled == true ? "page1a" : "page2"
 }
 
 private updateSchedule() {
@@ -242,7 +286,7 @@ private getEndAtOptions() {
     return ["Sunrise", "Sunset", "Specific Time"]
 }
 
-def astroCheck()
+private astroCheck()
 {
 	def sunriseOffset = null
     def sunsetOffset = null
@@ -265,3 +309,33 @@ def astroCheck()
 	log.debug "Sunrise with offset: ${new Date(state.riseTime)}($state.riseTime), Sunset with offset: ${new Date(state.setTime)}($state.setTime)"
 }
 
+private getDaysOk()
+{
+	def result = true
+	if (days)
+    {
+		def df = new java.text.SimpleDateFormat("EEEE")
+        df.setTimeZone(getTimeZone())
+		def day = df.format(new Date())
+		result = days.contains(day)
+    }
+	log.trace "daysOk = $result"
+	return result
+}
+
+private getTimeZone() {
+    if (location.timeZone)
+    {
+        return location.timeZone
+    }
+    
+    return TimeZone.getTimeZone("America/New_York")
+}
+
+private hhmm(time, fmt = "h:mm a")
+{
+	def t = timeToday(time, location.timeZone)
+	def f = new java.text.SimpleDateFormat(fmt)
+	f.setTimeZone(getTimeZone())
+	f.format(t)
+}
