@@ -23,7 +23,6 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
-
 preferences {
 	page(name: "page1", title: "Configuration...", uninstall: true, install: false, nextPage: "page2") {
     	section("24 Hour Mode") {
@@ -32,48 +31,59 @@ preferences {
 		section("Switch settings") {
         	input(name: "selectedSwitch", type: "capability.switch", title: "Select the switches to trigger...", required: true, multiple: true)
 			def timeLabel = timeIntervalLabel()
-			href(name: "timeIntervalInput", page: "pageTimeInterval", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
+			href(name: "timeIntervalInput", page: "pageIntervalOptions1", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null)
 			input(name: "days", type: "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
 			input(name: "modes", type: "mode", title: "Only when mode is:", multiple: true, required: false)
         	input(name: "isTriggerOnModeChange", type: "bool", title: "Always trigger when mode changes?")
 		}
 	}
     page(name: "page2")
-	page(name: "pageTimeInterval", title: "Only during a certain time...") {
-    	section(title: "Start time") { }
-    	section(hidden: hideStartAtSunriseSection(), hideable: true){
-        	input(name: "isStartAtSunrise", type: "bool", title: "Start at sunrise", required: true, submitOnChange: true)
-        }
-    	section(hidden: hideStartAtSunriseOffsetSection(), hideable: true){
-        	input(name: "startAtSunriseOffset", type: "int", title: "Start how many minutes after sunrise?", required: false)
-        }
-    	section(hidden: hideStartAtSunsetSection(), hideable: true){
-        	input(name: "isStartAtSunset", type: "bool", title: "Start at sunset", required: true, submitOnChange: true)
-        }
-    	section(hidden: hideStartAtSunsetOffsetSection(), hideable: true){
-        	input(name: "startAtSunsetOffset", type: "int", title: "Start how many minutes after sunset?", required: false)
-        }
-    	section() {
-        	input(name: "startAtTime", type: "time", title: "Start at time", required: false)
-        }
-        section(title: "End time") { }
-    	section(hidden: hideEndAtSunriseSection(), hideable: true){
-        	input(name: "isEndAtSunrise", type: "bool", title: "End at sunrise", required: true, submitOnChange: true)
-        }
-    	section(hidden: hideEndAtSunriseOffsetSection(), hideable: true){
-        	input(name: "endAtSunriseOffset", type: "int", title: "End how many minutes after sunrise?", required: false)
-        }
-    	section(hidden: hideEndAtSunsetSection(), hideable: true){
-        	input(name: "isEndAtSunset", type: "bool", title: "End at sunset", required: true, submitOnChange: true)
-        }
-    	section(hidden: hideEndAtSunsetOffsetSection(), hideable: true){
-        	input(name: "endAtSunsetOffset", type: "int", title: "End how many minutes after sunset?", required: false)
-        }
-    	section() {
-        	input(name: "endAtTime", type: "time", title: "End at time", required: false)
-        }
-	}
+	page(name: "pageIntervalOptions1")
+    page(name: "pageIntervalOptions2")
 }
+
+def pageIntervalOptions1() {
+	dynamicPage(name: "pageIntervalOptions1", title: "Only during a certain time...", nextPage: "pageIntervalOptions2") {
+    	section() {
+        	input(name: "startAt", type: "enum", title: "Start at...", required: true, options: getStartAtOptions(), submitOnChange: true)
+        	input(name: "endAt", type: "enum", title: "End at...", required: true, options: getEndAtOptions(), submitOnChange: true)            
+        }
+    }
+}
+
+def pageEndAtIntervalOptions() {
+	dynamicPage(name: "pageIntervalOptions2", title: "Only during a certain time...") {
+    	section() {
+            log.trace "Start Type: ${startAt}"
+            
+            switch(startAt) {
+                case "Sunrise":
+                	input(name: "startAtSunriseOffset", type: "int", title: "Start how many minutes after sunrise?", required: false)
+                	break;
+                case "Sunset":
+               		input(name: "startAtSunsetOffset", type: "int", title: "Start how many minutes after sunset?", required: false)
+                	break;
+                case "Specific Time":
+                	input(name: "startAtTime", type: "time", title: "Start at time", required: isStartAtTimeRequired())
+                	break;
+            }
+            
+            log.trace "End Type: ${endAt}"
+            switch(endAt) {
+                case "Sunrise":
+                	input(name: "endAtSunriseOffset", type: "int", title: "End how many minutes after sunrise?", required: false)
+                	break;
+                case "Sunset":
+                	input(name: "endAtSunsetOffset", type: "int", title: "End how many minutes after sunset?", required: false)
+                	break;
+                case "Specific Time":
+                	input(name: "endAtTime", type: "time", title: "End at time", required: isEndAtTimeRequired())
+                	break;
+            }
+        }    	
+    }
+}
+
 
 def page2() {
 	dynamicPage(name: "page2", title: "Switch Levels", uninstall: true, install: true) {
@@ -125,50 +135,30 @@ private timeIntervalLabel()
 	(startAtTime && endAtTime) ? hhmm(startAtTime) + "-" + hhmm(endAtTime, "h:mm a z") : ""
 }
 
-private hideStartAtSunriseSection() {
-	def isHidden = isEndAtSunrise || isStartAtSunset
-    log.trace "hideStartAtSunriseSection: $isHidden"
-    return isHidden
+private isStartAtTimeRequired() {
+	return startAt == "Specific Time"
 }
 
-private hideStartAtSunriseOffsetSection() {
-	def isHidden = (isStartAtSunrise == null || isStartAtSunrise == false)
-    log.trace "hideStartAtSunriseOffsetSection: $isHidden"
-    return isHidden
+private isEndAtTimeRequired() {
+	return endAt == "Specific Time"
 }
 
-private hideStartAtSunsetSection() {
-	def isHidden = isEndAtSunset || isStartAtSunrise
-    log.trace "hideStartAtSunsetSection: $isHidden"
-    return isHidden
+private getStartAtOptions() {
+	if(endAt == "Sunrise") {
+    	return ["Sunset", "Specific Time"]
+    } else if (endAt == "Sunset") {
+    	return ["Sunrise", "Specific Time"]
+    }
+    
+    return ["Sunrise", "Sunset", "Specific Time"]
 }
 
-private hideStartAtSunsetOffsetSection() {
-	def isHidden = (isStartAtSunset == null || isStartAtSunset == false)
-    log.trace "hideStartAtSunsetOffsetSection: $isHidden"
-    return isHidden
-}
-
-private hideEndAtSunriseSection() {
-	def isHidden = isStartAtSunrise || isEndAtSunset
-    log.trace "hideEndAtSunriseSection: $isHidden"
-    return isHidden
-}
-
-private hideEndAtSunriseOffsetSection() {
-	def isHidden = (isEndAtSunrise == null || isEndAtSunrise == false)
-    log.trace "hideEndAtSunriseOffsetSection: $isHidden"
-    return isHidden
-}
-
-private hideEndAtSunsetSection() {
-	def isHidden = isStartAtSunset || isEndAtSunrise 
-    log.trace "hideEndAtSunsetSection: $isHidden"
-    return isHidden
-}
-
-private hideEndAtSunsetOffsetSection() {
-	def isHidden = (isEndAtSunset == null || isEndAtSunset == false)
-    log.trace "hideEndAtSunsetOffsetSection: $isHidden"
-    return isHidden
+private getEndAtOptions() {
+	if(startAt == "Sunrise") {
+    	return ["Sunset", "Specific Time"]
+    } else if (startAt == "Sunset") {
+    	return ["Sunrise", "Specific Time"]
+    }
+    
+    return ["Sunrise", "Sunset", "Specific Time"]
 }
