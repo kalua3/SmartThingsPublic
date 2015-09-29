@@ -40,32 +40,34 @@ preferences {
 	}
     page(name: "page2")
 	page(name: "pageTimeInterval", title: "Only during a certain time...") {
+    	section(title: "Start time") { }
     	section(hidden: hideStartAtSunriseSection(), hideable: true){
-        	input(name: "isStartAtSunrise", type: "bool", title: "Start at sunrise")
+        	input(name: "isStartAtSunrise", type: "bool", title: "Start at sunrise", required: true, submitOnChange: true)
         }
-    	section(hidden: hideStartAtSunlightSection(), hideable: true){
-        	input(name: "isStartAtSunlight", type: "bool", title: "Start at sunlight")
+    	section(hidden: hideStartAtSunriseOffsetSection(), hideable: true){
+        	input(name: "startAtSunriseOffset", type: "int", title: "Start how many minutes after sunrise?", required: false)
         }
     	section(hidden: hideStartAtSunsetSection(), hideable: true){
-        	input(name: "isStartAtSunset", type: "bool", title: "Start at sunset")
+        	input(name: "isStartAtSunset", type: "bool", title: "Start at sunset", required: true, submitOnChange: true)
         }
-    	section(hidden: hideStartAtDarkSection(), hideable: true){
-        	input(name: "isStartAtDark", type: "bool", title: "Start at dark")
+    	section(hidden: hideStartAtSunsetOffsetSection(), hideable: true){
+        	input(name: "startAtSunsetOffset", type: "int", title: "Start how many minutes after sunset?", required: false)
         }
     	section() {
         	input(name: "startAtTime", type: "time", title: "Start at time", required: false)
         }
+        section(title: "End time") { }
     	section(hidden: hideEndAtSunriseSection(), hideable: true){
-        	input(name: "isEndAtSunrise", type: "bool", title: "End at sunrise")
+        	input(name: "isEndAtSunrise", type: "bool", title: "End at sunrise", required: true, submitOnChange: true)
         }
-    	section(hidden: hideEndAtSunlightSection(), hideable: true){
-        	input(name: "isEndAtSunlight", type: "bool", title: "End at sunlight")
+    	section(hidden: hideEndAtSunriseOffsetSection(), hideable: true){
+        	input(name: "endAtSunriseOffset", type: "int", title: "End how many minutes after sunrise?", required: false)
         }
     	section(hidden: hideEndAtSunsetSection(), hideable: true){
-        	input(name: "isEndAtSunset", type: "bool", title: "End at sunset")
+        	input(name: "isEndAtSunset", type: "bool", title: "End at sunset", required: true, submitOnChange: true)
         }
-    	section(hidden: hideEndAtDarkSection(), hideable: true){
-        	input(name: "isEndAtDark", type: "bool", title: "End at dark")
+    	section(hidden: hideEndAtSunsetOffsetSection(), hideable: true){
+        	input(name: "endAtSunsetOffset", type: "int", title: "End how many minutes after sunset?", required: false)
         }
     	section() {
         	input(name: "endAtTime", type: "time", title: "End at time", required: false)
@@ -113,7 +115,9 @@ def updated() {
 
 def initialize() {
 	// TODO: subscribe to attributes, devices, locations, etc.
-    
+  	if(isTriggerOnModeChange) {
+    	
+    }
 }
 
 private timeIntervalLabel()
@@ -122,41 +126,49 @@ private timeIntervalLabel()
 }
 
 private hideStartAtSunriseSection() {
-	isEndAtSunrise || isStartAtSunlight || isStartAtSunset || isStartAtDark
+	def isHidden = isEndAtSunrise || isStartAtSunset
+    log.trace "hideStartAtSunriseSection: $isHidden"
+    return isHidden
 }
 
-private hideStartAtSunlightSection() {
-	isEndAtSunlight || isStartAtSunrise || isStartAtSunset || isStartAtDark
+private hideStartAtSunriseOffsetSection() {
+	def isHidden = (isStartAtSunrise == null || isStartAtSunrise == false)
+    log.trace "hideStartAtSunriseOffsetSection: $isHidden"
+    return isHidden
 }
 
 private hideStartAtSunsetSection() {
-	isEndAtSunset || isStartAtSunrise || isStartAtSunlight || isStartAtDark
+	def isHidden = isEndAtSunset || isStartAtSunrise
+    log.trace "hideStartAtSunsetSection: $isHidden"
+    return isHidden
 }
 
-private hideStartAtDarkSection() {
-	isEndAtDark || isStartAtSunrise || isStartAtSunlight || isStartAtSunset
-}
-
-private hideStartAtTime() {
-	isEndAtDark || isStartAtSunrise || isStartAtSunlight || isStartAtSunset
+private hideStartAtSunsetOffsetSection() {
+	def isHidden = (isStartAtSunset == null || isStartAtSunset == false)
+    log.trace "hideStartAtSunsetOffsetSection: $isHidden"
+    return isHidden
 }
 
 private hideEndAtSunriseSection() {
-	isStartAtSunrise || isEndAtSunlight || isEndAtSunset || isEndAtDark
+	def isHidden = isStartAtSunrise || isEndAtSunset
+    log.trace "hideEndAtSunriseSection: $isHidden"
+    return isHidden
 }
 
-private hideEndAtSunlightSection() {
-	isStartAtSunlight || isEndAtSunrise || isEndAtSunset || isEndAtDark
+private hideEndAtSunriseOffsetSection() {
+	def isHidden = (isEndAtSunrise == null || isEndAtSunrise == false)
+    log.trace "hideEndAtSunriseOffsetSection: $isHidden"
+    return isHidden
 }
 
 private hideEndAtSunsetSection() {
-	isStartAtSunset || isEndAtSunrise || isEndAtSunlight || isEndAtDark
+	def isHidden = isStartAtSunset || isEndAtSunrise 
+    log.trace "hideEndAtSunsetSection: $isHidden"
+    return isHidden
 }
 
-private hideEndAtDarkSection() {
-	isStartAtDark || isEndAtSunrise || isEndAtSunlight || isEndAtSunset
-}
-
-private hideEndAtTime() {
-	isStartAtDark || isEndAtSunrise || isEndAtSunlight || isEndAtSunset
+private hideEndAtSunsetOffsetSection() {
+	def isHidden = (isEndAtSunset == null || isEndAtSunset == false)
+    log.trace "hideEndAtSunsetOffsetSection: $isHidden"
+    return isHidden
 }
