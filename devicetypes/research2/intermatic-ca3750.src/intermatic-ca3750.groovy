@@ -19,7 +19,7 @@ metadata {
 
 
 		fingerprint inClusters: "0x91 0x73 0x72 0x86 0x60 0x25 0x27"
-	
+        
 		attribute "switch1", "string"
 		attribute "switch2", "string"
 		attribute "switch3", "string"
@@ -55,9 +55,6 @@ metadata {
                         state "on", label: "switch2", action: "off2", icon: "st.switches.switch.on", backgroundColor: "#79b821"
                         state "off", label: "switch2", action: "on2", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
                 }
-        standardTile("configure", "device.switch", inactiveLabel: false, decoration: "flat") {
-        				state "default", label:"", action:"configure", icon:"st.secondary.configure"
-                }
 
         standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
                         state "default", label:"", action:"refresh", icon:"st.secondary.refresh"
@@ -66,7 +63,7 @@ metadata {
 
 
 		main "switch"
-		details(["switch","switch1","switch2","switch3","switch2on", "switch2off","levelSliderControl","configure","refresh"])
+		details(["switch","switch1","switch2","refresh"])
 	}
 }
 
