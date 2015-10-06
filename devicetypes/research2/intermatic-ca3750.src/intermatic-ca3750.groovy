@@ -238,8 +238,6 @@ def indicatorWhenOn() {
 def setlevel1(value) { setleveX(1, value) }; def setlevel2(value) { setlevelX(2, value) }
 //def on1() { swOn(1) }; def off1() { swOff(1) }
 //def on2() { swOn(1) }; def off2() { swOff(1) }
-def on3() { swOn(3) }; def off3() { swOff(3) }
-def on4() { swOn(4) }; def off4() { swOff(4) }
 
 def on() {
 	log.debug "<FONT COLOR=GREEN>On Digital</FONT>"
@@ -265,90 +263,20 @@ def off() {
 
 
 def on1() {
-    	delayBetween([
-		zwave.basicV1.basicSet(value: 0x00).format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),
-
-	])
+	zwave.multiChannelV3.multiInstanceCmdEncap(instance:1, commandClass:37, command:1, parameter:[255]).format()
 }
 
 def off1() {
-        delayBetween([
-		zwave.basicV1.basicSet(value: 0xFF).format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),
-	])
+	zwave.multiChannelV3.multiInstanceCmdEncap(instance:1, commandClass:37, command:1, parameter:[0]).format()
 }
 
 def on2() {
-    def sw1 = device.currentValue("switch1")
-    sendEvent(name:"switch2", value:"on")
-    if(sw1=="on") {
-        delayBetween([
-		zwave.switchAllV1.switchAllOn().format(),
-		zwave.switchAllV1.switchAllGet().format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),	
-		])
-    } else {
-        delayBetween([
-		zwave.switchAllV1.switchAllOn().format(),
-		zwave.basicV1.basicSet(value: 0xFF).format(),
-        zwave.switchAllV1.switchAllGet().format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),		
-		])
-    }
+	zwave.multiChannelV3.multiInstanceCmdEncap(instance:2, commandClass:37, command:1, parameter:[255]).format()
 }
 
 def off2() {
-    def sw1 = device.currentValue("switch1")
-    sendEvent(name:"switch2", value:"off")
-   	if(sw1=="off") {
-        delayBetween([
-		zwave.switchAllV1.switchAllOff().format(),
-		zwave.switchAllV1.switchAllGet().format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),		
-		])
-    } else {
-        delayBetween([
-		zwave.switchAllV1.switchAllOff().format(),
-		zwave.basicV1.basicSet(value: 0x00).format(),
-        zwave.switchAllV1.switchAllGet().format(),
-		zwave.switchBinaryV1.switchBinaryGet().format(),
-        zwave.multiInstanceV1.multiInstanceGet().format(),		
-		])
-    }
-
+	zwave.multiChannelV3.multiInstanceCmdEncap(instance:1, commandClass:37, command:1, parameter:[0]).format()
 }
-
-
-
-
-
-
-
-def setLevelX(port, value) {
-    def level = Math.min(value as Integer, 99)
-	delayBetween ([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
-}
-
-def setLevel(value) {
-
-	log.debug "<FONT COLOR=GREEN>SetLevel $value Off Digital</FONT>"
-
-    def level = Math.min(value as Integer, 99)
-	delayBetween ([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
-}
-
-def setLevel(value, duration) {
-    def level = Math.min(value as Integer, 99)
-	def dimmingDuration = duration < 128 ? duration : 128 + Math.round(duration / 60)
-	zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: dimmingDuration).format()
-}
-
 
 def configure() {
 	log.debug "Executing configure"
