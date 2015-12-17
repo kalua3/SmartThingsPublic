@@ -21,6 +21,7 @@ metadata {
   definition (name: "Foscam-Remote", namespace: "imbrianj", author: "brian@bevey.org") {
     capability "Image Capture"
     capability "Polling"
+    capability "Sensor"
 
     attribute "setStatus",   "string"
     attribute "alarmStatus", "string"
@@ -48,9 +49,13 @@ metadata {
   }
 
   tiles {
+  	standardTile("image", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: true) {
+	  state "default", label: "", action: "", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
+	}
+  
     carouselTile("cameraDetails", "device.image", width: 3, height: 2) { }
 
-    standardTile("camera", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
+    standardTile("camera", "device.image", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: false) {
       state "default", label: "", action: "Image Capture.take", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
     }
 
@@ -62,7 +67,7 @@ metadata {
       state "take", label: "up", action: "up", icon: ""
     }
 
-    standardTile("alarmStatus", "device.alarmStatus", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
+    standardTile("alarmStatus", "device.alarmStatus", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: false) {
       state "off", label: "off", action: "toggleAlarm", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
       state "on", label: "on", action: "toggleAlarm", icon: "st.camera.dropcam-centered",  backgroundColor: "#53A7C0"
     }
@@ -108,7 +113,7 @@ metadata {
       state "default", action:"polling.poll", icon:"st.secondary.refresh"
     }
 
-    main "alarmStatus"
+    main "image"
 
     details(["cameraDetails", "take", "up", "alarmStatus", "left", "pause", "right", "blank", "down", "set", "preset1", "preset2", "preset3", "refresh"])
   }
