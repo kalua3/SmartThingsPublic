@@ -10,9 +10,9 @@ definition(
     author: "Jeremy Huckeba",
     description: "Enables advanced automatic dimming and switching when the mode changes for up to 20 devices.",
     category: "My Apps",
-    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
-    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
+    iconUrl: "http://cdn.device-icons.smartthings.com/Lighting/light14-icn.png",
+    iconX2Url: "http://cdn.device-icons.smartthings.com/Lighting/light14-icn@2x.png",
+    iconX3Url: "http://cdn.device-icons.smartthings.com/Lighting/light14-icn@3x.png")
 
 preferences {
 	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
@@ -28,11 +28,6 @@ preferences {
 	    }
 	}
     page(name: "page3", title: "Switch Levels", uninstall: true, nextPage: "page4")
-	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
-    	section() {
-        	input(name: "setMode", type: "mode", title: "Then set this mode", multiple: false, required: false)
-	    }
-	}
 }
 
 def page3() {
@@ -100,10 +95,6 @@ private setSwitchLevel(selectedSwitch, levelIndex) {
         } else {
         	selectedSwitch.off()
         }
-    }
-    
-    if(setMode != null) {
-    	location.setMode(setMode)
     }
 }
 

@@ -14,8 +14,9 @@ definition(
     author:      "brian@bevey.org",
     description: "Simply marks any thermostat 'away' if able (primarily focused on the Nest thermostat).  This is intended to be used with an 'Away' or 'Home' mode.",
     category:    "Green Living",
-    iconUrl:     "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
-    iconX2Url:   "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience%402x.png"
+    iconUrl:     "http://cdn.device-icons.smartthings.com/Lighting/light99-hue-icn.png",
+    iconX2Url:   "http://cdn.device-icons.smartthings.com/Lighting/light99-hue-icn@2x.png",
+    iconX3Url:   "http://cdn.device-icons.smartthings.com/Lighting/light99-hue-icn@3x.png"
 )
 
 preferences {
