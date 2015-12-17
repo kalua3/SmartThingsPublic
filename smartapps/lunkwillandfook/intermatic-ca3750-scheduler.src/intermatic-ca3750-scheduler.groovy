@@ -59,7 +59,6 @@ def initialize() {
 
 def scheduleStartHandler() {
 	if(!bypassModes.contains(location.mode)) {
-		log.debug "bypass switch currently set to "
 		if(bypassSwitch == null || bypassSwitch.currentState("switch").value == "off") {
 			log.debug "target switch turned on per schedule"
 			targetSwitch.on1();
@@ -91,6 +90,7 @@ def bypassSwitchHandler(evt) {
 		def tomorrow = today + 1
 		schedule(tomorrow, twentyFourHourHandler)
 		targetSwitch.on1()
+        log.debug "bypass switch scheduled to turn off at ${tomorrow}"
 	} else if (evt.value == "off") {
 		log.debug "bypass switch turned off"
 		unschedule("twentyFourHourHandler")
