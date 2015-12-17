@@ -2,7 +2,7 @@
  *  Switch Activates Hello, Home Phrase
  *
  *  Copyright 2015 Michael Struck
- *  Version 1.01 3/8/15
+ *  Version 1.02 3/8/15
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -31,6 +31,12 @@ definition(
 
 
 preferences {
+	page(name: "page1", title: "Welcome", nextPage: "getPref", uninstall: true) {
+    	section() {
+        	paragraph "Welcome. This app will let you configure an activity to run when a switch it turned on or off." 
+    		label title: "Assign a name", required: false
+        }
+    }
 	page(name: "getPref")
 }
 	
@@ -40,13 +46,16 @@ def getPref() {
 		input "controlSwitch", "capability.switch", title: "Switch", multiple: false, required: true
     }
     def phrases = location.helloHome?.getPhrases()*.label
-		if (phrases) {
+	if (phrases) {
         	phrases.sort()
 			section("Perform the following phrase when...") {
 				log.trace phrases
 				input "phrase_on", "enum", title: "Switch is on", required: true, options: phrases
-				input "phrase_off", "enum", title: "Switch is off", required: true, options: phrases
+				input "phrase_off", "enum", title: "Switch is off", required: false, options: phrases
 			}
+                        section("Turn the switch off when done?") {
+                                input "turn_switch_off", "bool", title: "Turn switch off", required: true
+                        }
 		}
 	}
 }
@@ -63,10 +72,13 @@ def updated() {
 }
 
 def switchHandler(evt) {
-	if (evt.value == "on") {
+    if (evt.value == "on") {
     	location.helloHome.execute(settings.phrase_on)
-    } else {
+    } else if(settings.phrase_off){
     	location.helloHome.execute(settings.phrase_off)
     }
-}
 
+    if(turn_switch_off) {
+      control_switch.off()
+    }
+}
