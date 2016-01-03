@@ -28,6 +28,11 @@ preferences {
 	    }
 	}
     page(name: "page3", title: "Switch Levels", uninstall: true, nextPage: "page4")
+	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
+    	section() {
+        	input(name: "setMode", type: "mode", title: "Then set this mode", multiple: false, required: false)
+	    }
+	}
 }
 
 def page3() {
@@ -95,6 +100,10 @@ private setSwitchLevel(selectedSwitch, levelIndex) {
         } else {
         	selectedSwitch.off()
         }
+    }
+    
+    if(setMode != null) {
+    	location.setMode(setMode)
     }
 }
 
