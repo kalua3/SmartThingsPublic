@@ -48,6 +48,29 @@ def routinesPage() {
     }
 }
 
+mappings {
+  path("/switches") {
+    action: [
+      GET: "listSwitches"
+    ]
+  }
+  path("/switches/:name/:command") {
+    action: [
+      PUT: "updateSwitch"
+    ]
+  }
+  path("/routines") {
+    action: [
+      GET: "listRoutines"
+    ]
+  }
+  path("/routines/:name") {
+    action: [
+      PUT: "executeRoutine"
+    ]
+  }
+}
+
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 	subscribe(controlSwitch, "switch", "switchHandler")
@@ -59,14 +82,63 @@ def updated() {
 	subscribe(controlSwitch, "switch", "switchHandler")
 }
 
-def switchHandler(evt) {
-    if (evt.value == "on") {
-    	location.helloHome.execute(settings.phrase_on)
-    } else if(settings.phrase_off){
-    	location.helloHome.execute(settings.phrase_off)
+// returns a list like
+// [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
+def listSwitches() {
+    def resp = []
+    selectedSwitches.each {
+      resp << [name: it.displayName, value: it.currentValue("switch")]
     }
+    return resp
+}
 
-    if(turn_switch_off) {
-      control_switch.off()
+// returns a list like
+// [[name: "goodbye"], [name: "good morning"]]
+def listRoutines() {
+    def resp = []
+    selectedRoutines.each {
+      resp << [name: it.displayName]
+    }
+    return resp
+}
+
+void updateSwitches() {
+    // use the built-in request object to get the command parameter
+    def name = params.name
+    def command = params.command
+
+    if (command && name) {
+
+        // check that the switch supports the specified command
+        // If not, return an error using httpError, providing a HTTP status code.
+        selectedSwitches.each {
+            if (it.displayName == name && !it.hasCommand(command)) {
+                httpError(501, "$command is not a valid command for the specified switch")
+            } else if (it.displayName == name) {
+            	it."$command"()
+            }
+        }
+    }
+}
+
+void executeRoutine() {
+    // use the built-in request object to get the command parameter
+    def name = params.name
+
+    if (name) {
+
+		def canExecute = false
+        // find the routine to execute
+        selectedRoutines.each {
+        	if(it.displayName == name) {
+            	canExecute = true
+            }
+        }
+        
+        if(canExecute) {
+            location.helloHome?.execute(name)
+        } else {
+            httpError(501, "$name is not a valid routine")
+        }
     }
 }
