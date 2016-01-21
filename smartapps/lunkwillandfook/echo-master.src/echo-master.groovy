@@ -31,19 +31,19 @@ definition(
 
 
 preferences {
-    page(title: "Switches", name: "Switches", nextPage: "routinesPage") {
+    page(title: "Switches", name: "Switches", nextPage: "routinesPage", uninstall: true) {
         section ("Allow external service to control these things...") {
-            input "selectedSwitches", "capability.switch", multiple: true, required: true
+            input "selectedSwitches", "capability.switch", multiple: true, required: false
         }
     }
-    page(name: "routinesPage", install: true)
+    page(name: "routinesPage", install: true, uninstall: true, title: "Routines")
 }
 
 def routinesPage() {    
-    dynamicPage(title: "Routines", uninstall: true) {
+    dynamicPage(name: "routinesPage") {
         def phrases = location.helloHome?.getPhrases()*.label
         section("Allow external service to control these routines...") {
-            input "selectedRoutines", "enum", title: "Phrase", required: false, options: phrases
+            input "selectedRoutines", "enum", title: "Phrase", required: false, multiple: true, options: phrases
 	    }
     }
 }
