@@ -30,21 +30,34 @@ definition(
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/App-AmazonEcho@3x.png")
 
 
-preferences {
-    page(title: "Switches", name: "Switches", nextPage: "routinesPage", uninstall: true) {
-        section ("Allow external service to control these things...") {
+preferences(oauthPage: "deviceAuthorization") {
+    page(name: "deviceAuthorization", title: "", nextPage: "instructionPage", install: false, uninstall: true) {
+        section ("Allow Alexa to control these switches...") {
             input "selectedSwitches", "capability.switch", multiple: true, required: false
         }
+        section ("Allow Alexa to control these thermostats...") {
+            input "selectedThermostats", "capability.thermostat", multiple: true, required: false
+        }
+        section ("Allow Alexa to control these colored bulbs...") {
+            input "selectedColorControls", "capability.colorControl", multiple: true, required: false
+        }
+        section ("Allow Alexa to read these contact sensors...") {
+            input "selectedContactSensors", "capability.contactSensor", multiple: true, required: false
+        }
+        section ("Allow Alexa to read these temperature sensors...") {
+            input "selectedTemperatureSensors", "capability.temperatureMeasurement", multiple: true, required: false
+        }
+        section ("Allow Alexa to read these water sensors...") {
+            input "selectedWaterSensors", "capability.waterSensor", multiple: true, required: false
+        }
+       section ("Allow Alexa to read these smoke detectors...") {
+            input "selectedSmokeDetectors", "capability.smokeDetector", multiple: true, required: false
+        }
     }
-    page(name: "routinesPage", install: true, uninstall: true, title: "Routines")
-}
-
-def routinesPage() {    
-    dynamicPage(name: "routinesPage") {
-        def phrases = location.helloHome?.getPhrases()*.label
-        section("Allow external service to control these routines...") {
-            input "selectedRoutines", "enum", title: "Phrase", required: false, multiple: true, options: phrases
-	    }
+    page(name: "instructionPage", title: "Device Discovery", install: true) {
+        section() {
+            paragraph "This app will also give Alexa access to run routines."
+        }
     }
 }
 
@@ -59,16 +72,26 @@ mappings {
       PUT: "updateSwitch"
     ]
   }
-  path("/routines") {
+  path("/contactSensors/:name") {
     action: [
-      GET: "listRoutines"
+      GET: "listContactSensors"
     ]
   }
-  path("/routines/:name") {
+  path("/temperatureSensors/:name") {
     action: [
-      PUT: "executeRoutine"
+      GET: "listTemperatureSensors"
     ]
   }
+//  path("/routines") {
+//    action: [
+//      GET: "listRoutines"
+//    ]
+//  }
+//  path("/routines/:name") {
+//    action: [
+//      PUT: "executeRoutine"
+//    ]
+//  }
 }
 
 def installed() {
@@ -88,6 +111,46 @@ def listSwitches() {
     def resp = []
     selectedSwitches.each {
       resp << [name: it.displayName, value: it.currentValue("switch")]
+    }
+    return resp
+}
+
+// returns a list like
+// [[name: "front door", value: "closed"], [name: "back door", value: "opened"]]
+def listContactSensors() {
+    log.debug "listContactSensors: $selectedContactSensors"
+    log.debug "listContactSensors Name: ${params.name}"
+    def resp = []
+    if(params.name == null) {
+        selectedContactSensors.each {
+          resp << [name: it.displayName, value: it.currentValue("contact")]
+        }
+    } else {
+    	selectedContactSensors.each {
+        	if(it.displayName.toLowerCase() == params.name.toLowerCase()) {
+            	resp << [name: it.displayName, value: it.currentValue("contact")]
+            }
+        }
+    }
+    return resp
+}
+
+// returns a list like
+// [[name: "front door", value: "74", scale: "F"], [name: "back door", value: "76", scale: "F"]]
+def listTemperatureSensors() {
+    log.debug "listTemperatureSensors: $selectedTemperatureSensors"
+    log.debug "listTemperatureSensors Name: ${params.name}"
+    def resp = []
+    if(params.name == null) {
+        selectedTemperatureSensors.each {
+          resp << [name: it.displayName, value: it.currentValue("temperature"), scale: location.temperatureScale]
+        }
+    } else {
+    	selectedTemperatureSensors.each {
+        	if(it.displayName.toLowerCase() == params.name.toLowerCase()) {
+            	resp << [name: it.displayName, value: it.currentValue("temperature"), scale: location.temperatureScale]
+            }
+        }
     }
     return resp
 }
