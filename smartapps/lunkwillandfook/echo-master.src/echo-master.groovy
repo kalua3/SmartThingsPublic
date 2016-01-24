@@ -29,9 +29,8 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/App-AmazonEcho@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/App-AmazonEcho@3x.png")
 
-
 preferences(oauthPage: "deviceAuthorization") {
-    page(name: "deviceAuthorization", title: "", nextPage: "instructionPage", install: false, uninstall: true) {
+    page(name: "deviceAuthorization", title: "", nextPage: "routinesPage", install: false, uninstall: true) {
         section ("Allow Alexa to control these switches...") {
             input "selectedSwitches", "capability.switch", multiple: true, required: false
         }
@@ -53,15 +52,35 @@ preferences(oauthPage: "deviceAuthorization") {
        section ("Allow Alexa to read these smoke detectors...") {
             input "selectedSmokeDetectors", "capability.smokeDetector", multiple: true, required: false
         }
+       section ("Allow Alexa to read these battery powered devices...") {
+            input "selectedBatteries", "capability.battery", multiple: true, required: false
+        }
     }
-    page(name: "instructionPage", title: "Device Discovery", install: true) {
-        section() {
-            paragraph "This app will also give Alexa access to run routines."
+    page(name: "routinesPage")
+}
+
+// page def must include a parameter for the params map!
+def routinesPage() {
+	def actions = location.helloHome?.getPhrases()*.label;
+
+    dynamicPage(name: "routinesPage", uninstall: true, install: true) {
+        section {
+            input "selectedRoutines", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: true
         }
     }
 }
 
 mappings {
+  path("/temperatureSensors/:name") {
+    action: [
+      GET: "listTemperatureSensors"
+    ]
+  }
+  path("/temperatureSensors") {
+    action: [
+      GET: "listTemperatureSensors"
+    ]
+  }
   path("/switches") {
     action: [
       GET: "listSwitches"
@@ -77,9 +96,29 @@ mappings {
       GET: "listContactSensors"
     ]
   }
-  path("/temperatureSensors/:name") {
+  path("/contactSensors") {
     action: [
-      GET: "listTemperatureSensors"
+      GET: "listContactSensors"
+    ]
+  }
+  path("/lowBatteries/:level") {
+    action: [
+      GET: "listLowBatteries"
+    ]
+  }
+  path("/lowBatteries") {
+    action: [
+      GET: "listLowBatteries"
+    ]
+  }
+  path("/getRoutines") {
+    action: [
+      GET: "listRoutines"
+    ]
+  }
+  path("/runRoutine/:name") {
+      action: [
+      PUT: "runRoutine"
     ]
   }
 //  path("/routines") {
@@ -106,6 +145,24 @@ def updated() {
 }
 
 // returns a list like
+// [[name: "front door", value: "65"], [name: "smoke detector", value: "30"]]
+def listLowBatteries() {
+    def level = 20;
+	if(params.level != null) {
+    	level = new BigDecimal(params.level.replaceAll(",", ""))
+    }
+	
+    def resp = []
+    selectedBatteries.each {
+    	def batteryLevel = it.currentValue("battery")
+        if(it.currentValue("battery") != null && it.currentValue("battery") < level) {
+            resp << [name: it.displayName, value: it.currentValue("battery")]
+        }
+    }
+    return resp
+}
+
+// returns a list like
 // [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
 def listSwitches() {
     def resp = []
@@ -118,8 +175,6 @@ def listSwitches() {
 // returns a list like
 // [[name: "front door", value: "closed"], [name: "back door", value: "opened"]]
 def listContactSensors() {
-    log.debug "listContactSensors: $selectedContactSensors"
-    log.debug "listContactSensors Name: ${params.name}"
     def resp = []
     if(params.name == null) {
         selectedContactSensors.each {
@@ -139,7 +194,7 @@ def listContactSensors() {
 // [[name: "front door", value: "74", scale: "F"], [name: "back door", value: "76", scale: "F"]]
 def listTemperatureSensors() {
     log.debug "listTemperatureSensors: $selectedTemperatureSensors"
-    log.debug "listTemperatureSensors Name: ${params.name}"
+    //log.debug "listTemperatureSensors Name: ${params.name}"
     def resp = []
     if(params.name == null) {
         selectedTemperatureSensors.each {
@@ -160,9 +215,17 @@ def listTemperatureSensors() {
 def listRoutines() {
     def resp = []
     selectedRoutines.each {
-      resp << [name: it.displayName]
+      resp << [name: it]
     }
     return resp
+}
+
+def runRoutine() {
+    selectedRoutines.each {
+      if(params.name.toLowerCase() == it.displayName.toLowerCase()) {
+      	location.helloHome.execute(it.displayName.toLowerCase())
+      }
+    }
 }
 
 void updateSwitches() {
