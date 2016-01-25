@@ -111,26 +111,16 @@ mappings {
       GET: "listLowBatteries"
     ]
   }
-  path("/getRoutines") {
+  path("/routines") {
     action: [
       GET: "listRoutines"
     ]
   }
-  path("/runRoutine/:name") {
-      action: [
-      PUT: "runRoutine"
+  path("/routines/:name") {
+    action: [
+      PUT: "executeRoutine"
     ]
   }
-//  path("/routines") {
-//    action: [
-//      GET: "listRoutines"
-//    ]
-//  }
-//  path("/routines/:name") {
-//    action: [
-//      PUT: "executeRoutine"
-//    ]
-//  }
 }
 
 def installed() {
@@ -193,8 +183,6 @@ def listContactSensors() {
 // returns a list like
 // [[name: "front door", value: "74", scale: "F"], [name: "back door", value: "76", scale: "F"]]
 def listTemperatureSensors() {
-    log.debug "listTemperatureSensors: $selectedTemperatureSensors"
-    //log.debug "listTemperatureSensors Name: ${params.name}"
     def resp = []
     if(params.name == null) {
         selectedTemperatureSensors.each {
@@ -213,19 +201,12 @@ def listTemperatureSensors() {
 // returns a list like
 // [[name: "goodbye"], [name: "good morning"]]
 def listRoutines() {
+    log.debug "listTemperatureSensors: $listRoutines"
     def resp = []
     selectedRoutines.each {
       resp << [name: it]
     }
     return resp
-}
-
-def runRoutine() {
-    selectedRoutines.each {
-      if(params.name.toLowerCase() == it.displayName.toLowerCase()) {
-      	location.helloHome.execute(it.displayName.toLowerCase())
-      }
-    }
 }
 
 void updateSwitches() {
@@ -247,22 +228,23 @@ void updateSwitches() {
     }
 }
 
-void executeRoutine() {
+def executeRoutine() {
     // use the built-in request object to get the command parameter
     def name = params.name
-
+    def executeName = name
     if (name) {
-
 		def canExecute = false
         // find the routine to execute
         selectedRoutines.each {
-        	if(it.displayName == name) {
+        	if(it.toLowerCase() == name.toLowerCase()) {
             	canExecute = true
+                executeName = it
             }
         }
         
         if(canExecute) {
-            location.helloHome?.execute(name)
+            location.helloHome?.execute(executeName)
+            httpSuccess
         } else {
             httpError(501, "$name is not a valid routine")
         }
