@@ -57,15 +57,49 @@ preferences(oauthPage: "deviceAuthorization") {
         }
     }
     page(name: "routinesPage")
+    page(title: "Phrases", name: "phrasesPage", uninstall: true, install: true) {
+
+    }
 }
 
 // page def must include a parameter for the params map!
 def routinesPage() {
 	def actions = location.helloHome?.getPhrases()*.label;
 
-    dynamicPage(name: "routinesPage", uninstall: true, install: true) {
+    dynamicPage(name: "routinesPage", uninstall: true, install: false, nextPage: "phrasesPage") {
         section {
             input "selectedRoutines", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: true
+        }
+    }
+}
+
+def phrasesPage() {
+	def actions = selectedRoutines;
+
+    dynamicPage(name: "phrasesPage", uninstall: true, install: true) {
+		section("I'm leaving...") {
+        	input(name: "leavingPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "leavingPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        }
+        section("I'm watching a movie...") {
+        	input(name: "watchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "watchingMoviePhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false) 
+        }
+        section("I'm finished watching a movie...") {
+        	input(name: "finishedWatchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "finishedWatchingMoviePhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        }
+        section("I'm having a party...") {
+        	input(name: "havingPartyPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "havingPartyPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        }
+        section("I'm back...") {
+        	input(name: "backPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "backPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        }
+		section("I'm cleaning...") {
+        	input(name: "cleaningPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
+            input(name: "cleaningPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
         }
     }
 }
@@ -119,6 +153,11 @@ mappings {
   path("/routines/:name") {
     action: [
       PUT: "executeRoutine"
+    ]
+  }
+  path("/phrases/:name") {
+  	action: [
+      PUT: "executePhrase"
     ]
   }
 }
@@ -247,6 +286,69 @@ def executeRoutine() {
             httpSuccess
         } else {
             httpError(501, "$name is not a valid routine")
+        }
+    }
+}
+
+def executePhrase() {
+    // use the built-in request object to get the command parameter
+    def name = params.name
+    def delay = 0
+    def routineName = name
+    def isValidPhrase = true
+    
+    switch(name) {
+    	case "leaving":
+        	delay = leavingPhraseDelay
+            routine = leavingPhraseRoutine
+        	break
+        case "watchingMovie":
+        	delay = watchingMoviePhraseDelay
+            routine = watchingMoviePhraseRoutine
+        	break
+        case "finishedWatchingMovie":
+        	delay = finishedWatchingMoviePhraseDelay
+            routine = finishedWatchingMoviePhraseRoutine
+        	break
+        case "havingParty":
+        	delay = havingPartyPhraseDelay
+            routine = havingPartyPhraseRoutine
+            break
+        case "back":
+        	delay = backPhraseDelay
+            routine = backPhraseRoutine
+            break
+        case "cleaning":
+        	delay = cleaningPhraseDelay
+            routine = cleaningPhraseRoutine
+            break
+        default:
+        	isValidPhrase = false
+            break
+    }
+    
+    if (routine != null) {
+		def canExecute = false
+        def executeName = null
+        // find the routine to execute
+        selectedRoutines.each {
+        	if(it.toLowerCase() == name.toLowerCase()) {
+            	canExecute = true
+                executeName = it
+            }
+        }
+        
+        if(canExecute) {
+            location.helloHome?.execute(executeName)
+            httpSuccess
+        } else {
+            httpError(501, "$phrase is not configured or the configured routine is unavailable")
+        }
+    } else {
+    	if(isValidPhrase == false) {
+        	httpError(501, "$name is not a valid phrase")
+        } else {
+        	httpError(501, "$phrase is not configured or the configured routine is unavailable")
         }
     }
 }
