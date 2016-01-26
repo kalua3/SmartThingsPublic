@@ -57,9 +57,7 @@ preferences(oauthPage: "deviceAuthorization") {
         }
     }
     page(name: "routinesPage")
-    page(title: "Phrases", name: "phrasesPage", uninstall: true, install: true) {
-
-    }
+    page(name: "phrasesPage")
 }
 
 // page def must include a parameter for the params map!
@@ -73,33 +71,50 @@ def routinesPage() {
     }
 }
 
+def LEAVINGPHRASETITLE = "I'm leaving..."
+def WATCHINGMOVIEPHRASETITLE = "I'm watching a movie..."
+def FINISHEDWATCHINGMOVIEPHRASETITLE = "I'm finished watching a movie..."
+def HAVINGPARTYPHRASETITLE = "I'm having a party..."
+def BACKPHRASETITLE = "I'm back..."
+def CLEANINGPHRASETITLE = "I'm cleaning..."
+def SLEEPPHRASETITLE = "I'm going to sleep..."
+def AWAKEPHRASETITLE = "I'm awake..."
+
 def phrasesPage() {
 	def actions = selectedRoutines;
 
     dynamicPage(name: "phrasesPage", uninstall: true, install: true) {
 		section("I'm leaving...") {
-        	input(name: "leavingPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "leavingPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        	input(name: "leavingPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "leavingPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
         section("I'm watching a movie...") {
-        	input(name: "watchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "watchingMoviePhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false) 
+        	input(name: "watchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "watchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false) 
         }
         section("I'm finished watching a movie...") {
-        	input(name: "finishedWatchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "finishedWatchingMoviePhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        	input(name: "finishedWatchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "finishedWatchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
         section("I'm having a party...") {
-        	input(name: "havingPartyPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "havingPartyPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        	input(name: "havingPartyPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "havingPartyPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
         section("I'm back...") {
-        	input(name: "backPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "backPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        	input(name: "backPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "backPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
 		section("I'm cleaning...") {
-        	input(name: "cleaningPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60")
-            input(name: "cleaningPhraseRoutine", "enum", title: "Allow Alexa to run these routines...", options: actions, required: false, multiple: false)
+        	input(name: "cleaningPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "cleaningPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        }
+		section("I'm going to sleep...") {
+        	input(name: "sleepPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "sleepPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        }
+		section("I'm awake...") {
+        	input(name: "awakePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "awakePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
     }
 }
@@ -292,63 +307,112 @@ def executeRoutine() {
 
 def executePhrase() {
     // use the built-in request object to get the command parameter
+    def resp = []
     def name = params.name
     def delay = 0
     def routineName = name
     def isValidPhrase = true
+    def phraseTitle = null
+    def scheduledRoutines = atomicState.scheduledRoutines
+    
+    if(scheduledRoutines == null) {
+    	scheduledRoutines = []
+    }
     
     switch(name) {
     	case "leaving":
         	delay = leavingPhraseDelay
-            routine = leavingPhraseRoutine
+            routineName = leavingPhraseRoutine
+            phraseTitle = LEAVINGPHRASETITLE
         	break
         case "watchingMovie":
         	delay = watchingMoviePhraseDelay
-            routine = watchingMoviePhraseRoutine
+            routineName = watchingMoviePhraseRoutine
+            phraseTitle = WATCHINGMOVIEPHRASETITLE
         	break
         case "finishedWatchingMovie":
         	delay = finishedWatchingMoviePhraseDelay
-            routine = finishedWatchingMoviePhraseRoutine
+            routineName = finishedWatchingMoviePhraseRoutine
+            phraseTitle = FINISHEDWATCHINGMOVIEPHRASETITLE
         	break
         case "havingParty":
         	delay = havingPartyPhraseDelay
-            routine = havingPartyPhraseRoutine
+            routineName = havingPartyPhraseRoutine
+            phraseTitle = HAVINGPARTYPHRASETITLE
             break
         case "back":
         	delay = backPhraseDelay
-            routine = backPhraseRoutine
+            routineName = backPhraseRoutine
+            phraseTitle = BACKPHRASETITLE
             break
         case "cleaning":
         	delay = cleaningPhraseDelay
-            routine = cleaningPhraseRoutine
+            routineName = cleaningPhraseRoutine
+            phraseTitle = CLEANINGPHRASETITLE
+            break
+        case "sleep":
+        	delay = sleepPhraseDelay
+            routineName = sleepPhraseRoutine
+            phraseTitle = SLEEPPHRASETITLE
+            break
+        case "awake":
+        	delay = awakePhraseDelay
+            routineName = awakePhraseRoutine
+            phraseTitle = AWAKEPHRASETITLE
             break
         default:
         	isValidPhrase = false
             break
     }
     
-    if (routine != null) {
+    if (routineName != null) {
 		def canExecute = false
         def executeName = null
         // find the routine to execute
         selectedRoutines.each {
-        	if(it.toLowerCase() == name.toLowerCase()) {
+        	if(it.toLowerCase() == routineName.toLowerCase()) {
             	canExecute = true
                 executeName = it
             }
         }
         
         if(canExecute) {
-            location.helloHome?.execute(executeName)
-            httpSuccess
+        	if(delay == 0) {
+            	location.helloHome?.execute(executeName)
+            } else {
+                def calendar = new Date().toCalendar()
+                calendar.add(Calendar.MINUTE, delay)
+                scheduledRoutines = atomicState.scheduledRoutines
+                scheduledRoutines.add([schedule: calendar, routine: executeName])
+                atomicState.scheduledRoutines = scheduledRoutines
+            	runIn(delay * 60, runScheduledRoutineHandler)
+            }
+            resp << [routine: executeName, delay: delay]
         } else {
-            httpError(501, "$phrase is not configured or the configured routine is unavailable")
+        	resp << [error: "NotConfigured", phrase: phraseTitle]
         }
     } else {
     	if(isValidPhrase == false) {
-        	httpError(501, "$name is not a valid phrase")
+        	resp << [error: "InvalidPhrase", name: name]
         } else {
-        	httpError(501, "$phrase is not configured or the configured routine is unavailable")
+            resp << [error: "NotConfigured", phrase: phraseTitle]
         }
+    }
+    
+    return resp
+}
+
+def runScheduledRoutineHandler() {
+	// iterate the scheduled routines and run the ones that have expired.
+    log.trace "runScheduledRoutineHandler"
+    
+    def calendar = new Date().toCalendar()
+    log.trace "routines ${atomicState.scheduledRoutines}"
+    atomicState.scheduledRoutines.each = {
+//    	if(it.schedule <= calendar) {
+//        	log.trace "runScheduledRoutineHandler found routine"
+//        	location.helloHome?.execute(it.routine)
+//            atomicState.scheduledRoutines.removeElement(it)
+//        }
     }
 }
