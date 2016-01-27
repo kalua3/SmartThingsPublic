@@ -29,6 +29,16 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/App-AmazonEcho@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/App-AmazonEcho@3x.png")
 
+def LEAVINGPHRASETITLE = "I'm leaving..."
+def WATCHINGMOVIEPHRASETITLE = "I'm watching a movie..."
+def FINISHEDWATCHINGMOVIEPHRASETITLE = "I'm finished watching a movie..."
+def HAVINGPARTYPHRASETITLE = "I'm having a party..."
+def BACKPHRASETITLE = "I'm back..."
+def CLEANINGPHRASETITLE = "I'm cleaning..."
+def SLEEPPHRASETITLE = "I'm going to sleep..."
+def AWAKEPHRASETITLE = "I'm awake..."
+
+// displays the preferences
 preferences(oauthPage: "deviceAuthorization") {
     page(name: "deviceAuthorization", title: "", nextPage: "routinesPage", install: false, uninstall: true) {
         section ("Allow Alexa to control these switches...") {
@@ -60,7 +70,7 @@ preferences(oauthPage: "deviceAuthorization") {
     page(name: "phrasesPage")
 }
 
-// page def must include a parameter for the params map!
+// displays the routines page
 def routinesPage() {
 	def actions = location.helloHome?.getPhrases()*.label;
 
@@ -71,15 +81,7 @@ def routinesPage() {
     }
 }
 
-def LEAVINGPHRASETITLE = "I'm leaving..."
-def WATCHINGMOVIEPHRASETITLE = "I'm watching a movie..."
-def FINISHEDWATCHINGMOVIEPHRASETITLE = "I'm finished watching a movie..."
-def HAVINGPARTYPHRASETITLE = "I'm having a party..."
-def BACKPHRASETITLE = "I'm back..."
-def CLEANINGPHRASETITLE = "I'm cleaning..."
-def SLEEPPHRASETITLE = "I'm going to sleep..."
-def AWAKEPHRASETITLE = "I'm awake..."
-
+// displays the phrases page
 def phrasesPage() {
 	def actions = selectedRoutines;
 
@@ -120,6 +122,16 @@ def phrasesPage() {
 }
 
 mappings {
+  path("/thermostats") {
+  	action: [
+      GET: "listThermostats"
+    ]
+  }
+  path("/thermostats/:name") {
+  	action: [
+      GET: "listThermostats"
+    ]
+  }
   path("/temperatureSensors/:name") {
     action: [
       GET: "listTemperatureSensors"
@@ -177,12 +189,16 @@ mappings {
   }
 }
 
+// runs when the smartapp is installed
 def installed() {
+	def immediatelocks = state.immediateLocks ?: []
 	log.debug "Installed with settings: ${settings}"
 	subscribe(controlSwitch, "switch", "switchHandler")
 }
 
+// runs when the smartapp is updated
 def updated() {
+	def immediatelocks = state.immediateLocks ?: []
 	log.debug "Updated with settings: ${settings}"
 	unsubscribe()
 	subscribe(controlSwitch, "switch", "switchHandler")
@@ -263,6 +279,7 @@ def listRoutines() {
     return resp
 }
 
+// not used. reserved for future use
 void updateSwitches() {
     // use the built-in request object to get the command parameter
     def name = params.name
@@ -282,6 +299,7 @@ void updateSwitches() {
     }
 }
 
+// executes the specified routine if the user has granted access to it
 def executeRoutine() {
     // use the built-in request object to get the command parameter
     def name = params.name
@@ -305,6 +323,7 @@ def executeRoutine() {
     }
 }
 
+// executes the specified phrase if the user has configured it and granted access to the configured routine
 def executePhrase() {
     // use the built-in request object to get the command parameter
     def resp = []
@@ -313,79 +332,78 @@ def executePhrase() {
     def routineName = name
     def isValidPhrase = true
     def phraseTitle = null
-    def scheduledRoutines = atomicState.scheduledRoutines
-    
-    if(scheduledRoutines == null) {
-    	scheduledRoutines = []
-    }
+    def phraseHandler = null
     
     switch(name) {
     	case "leaving":
         	delay = leavingPhraseDelay
             routineName = leavingPhraseRoutine
             phraseTitle = LEAVINGPHRASETITLE
+            phraseHandler = "runScheduledLeavingPhraseHandler"
         	break
         case "watchingMovie":
         	delay = watchingMoviePhraseDelay
             routineName = watchingMoviePhraseRoutine
             phraseTitle = WATCHINGMOVIEPHRASETITLE
+            phraseHandler = "runScheduledWatchingMoviePhraseHandler"
         	break
         case "finishedWatchingMovie":
         	delay = finishedWatchingMoviePhraseDelay
             routineName = finishedWatchingMoviePhraseRoutine
             phraseTitle = FINISHEDWATCHINGMOVIEPHRASETITLE
+            phraseHandler = "runScheduledFinishedWatchingMoviePhraseHandler"
         	break
         case "havingParty":
         	delay = havingPartyPhraseDelay
             routineName = havingPartyPhraseRoutine
             phraseTitle = HAVINGPARTYPHRASETITLE
+            phraseHandler = "runScheduledHavingPartyPhraseHandler"
             break
         case "back":
         	delay = backPhraseDelay
             routineName = backPhraseRoutine
             phraseTitle = BACKPHRASETITLE
+          	phraseHandler = "runScheduledBackPhraseHandler"
             break
         case "cleaning":
         	delay = cleaningPhraseDelay
             routineName = cleaningPhraseRoutine
             phraseTitle = CLEANINGPHRASETITLE
+            phraseHandler = "runScheduledCleaningPhraseHandler"
             break
         case "sleep":
         	delay = sleepPhraseDelay
             routineName = sleepPhraseRoutine
             phraseTitle = SLEEPPHRASETITLE
+            phraseHandler = "runScheduledSleepPhraseHandler"
             break
         case "awake":
         	delay = awakePhraseDelay
             routineName = awakePhraseRoutine
             phraseTitle = AWAKEPHRASETITLE
+            phraseHandler = "runScheduleAwakePhraseHandler"
             break
         default:
         	isValidPhrase = false
             break
     }
     
-    if (routineName != null) {
+    if (routineName != null && isValidPhrase == true) {
 		def canExecute = false
         def executeName = null
-        // find the routine to execute
+        
         selectedRoutines.each {
         	if(it.toLowerCase() == routineName.toLowerCase()) {
             	canExecute = true
                 executeName = it
-            }
-        }
+        	}
+    	}
         
         if(canExecute) {
-        	if(delay == 0) {
+        	if(delay == null || delay == 0) {
             	location.helloHome?.execute(executeName)
             } else {
-                def calendar = new Date().toCalendar()
-                calendar.add(Calendar.MINUTE, delay)
-                scheduledRoutines = atomicState.scheduledRoutines
-                scheduledRoutines.add([schedule: calendar, routine: executeName])
-                atomicState.scheduledRoutines = scheduledRoutines
-            	runIn(delay * 60, runScheduledRoutineHandler)
+            	runIn(delay * 60, phraseHandler)
             }
             resp << [routine: executeName, delay: delay]
         } else {
@@ -402,17 +420,130 @@ def executePhrase() {
     return resp
 }
 
-def runScheduledRoutineHandler() {
-	// iterate the scheduled routines and run the ones that have expired.
-    log.trace "runScheduledRoutineHandler"
+// runs the scheduled routine when the phrase is executed
+def runScheduledLeavingPhraseHandler() {
+    def canExecute = false
     
-    def calendar = new Date().toCalendar()
-    log.trace "routines ${atomicState.scheduledRoutines}"
-    atomicState.scheduledRoutines.each = {
-//    	if(it.schedule <= calendar) {
-//        	log.trace "runScheduledRoutineHandler found routine"
-//        	location.helloHome?.execute(it.routine)
-//            atomicState.scheduledRoutines.removeElement(it)
-//        }
+    selectedRoutines.each {
+        if(it.toLowerCase() == leavingPhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$leavingPhraseRoutine"
+    	location.helloHome?.execute(leavingPhraseRoutinee)
+    }
+}
+
+// runs the watching movie phrase routine when the phrase is executed
+def runScheduledWatchingMoviePhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == watchingMoviePhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$watchingMoviePhraseRoutine"
+    	location.helloHome?.execute(watchingMoviePhraseRoutine)
+    }
+}
+
+// runs the finished watching movie phrase routine when the phrase is executed
+def runScheduledFinishedWatchingMoviePhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == finishedWatchingMoviePhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$finishedWatchingMoviePhraseRoutine"
+    	location.helloHome?.execute(finishedWatchingMoviePhraseRoutine)
+    }
+}
+
+// runs the having party phrase routine when the phrase is executed
+def runScheduledHavingPartyPhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == havingPartyPhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$havingPartyPhraseRoutine"
+    	location.helloHome?.execute(havingPartyPhraseRoutine)
+    }
+}
+
+// runs the back phrase routine when the phrase is executed
+def runScheduledBackPhraseHandler() {
+
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == backPhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	location.helloHome?.execute(backPhraseRoutine)
+    }
+}
+
+// runs the cleaning phrase routine when the phrase is executed
+def runScheduledCleaningPhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == cleaningPhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$cleaningPhraseRoutine"
+    	location.helloHome?.execute(cleaningPhraseRoutine)
+    }
+}
+
+// runs the sleep phrase routine when the phrase is executed
+def runScheduledSleepPhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == sleepPhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$sleepPhraseRoutine"
+    	location.helloHome?.execute(sleepPhraseRoutine)
+    }
+}
+
+// runs the sleep phrase routine when the phrase is executed
+def runScheduledAwakePhraseHandler() {
+    def canExecute = false
+    
+    selectedRoutines.each {
+        if(it.toLowerCase() == awakePhraseRoutine.toLowerCase()) {
+            canExecute = true
+        }
+    }
+    
+    if(canExecute) {
+    	log.trace "$awakePhraseRoutine"
+    	location.helloHome?.execute(awakePhraseRoutine)
     }
 }
