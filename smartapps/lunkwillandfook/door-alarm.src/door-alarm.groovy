@@ -15,7 +15,7 @@ iconX2Url: "http://cdn.device-icons.smartthings.com/Health%20&%20Wellness/health
 iconX3Url: "http://cdn.device-icons.smartthings.com/Health%20&%20Wellness/health7-icn@3x.png")
 
 preferences {
-    page(name: "page1", title: "Welcome", nextPage: "page2", install: true, uninstall: true) {
+    page(name: "page1", title: "Welcome", install: true, uninstall: true) {
     	section("Warning") {
             paragraph "No warranty for any purpose expressed or implied. Use at your own risk!" 
             label title: "Assign a name", required: false
@@ -61,11 +61,17 @@ def initialize() {
 }
 
 def contactHandler(evt) {
-  if("open" == evt.value && atomicState.isDelayed == false) {
-    // contact was opened, turn on a light maybe?
-    log.debug "Contact is in ${evt.value} state"
-    // trigger alarm
-    targetAlarms.on()
+  if("open" == evt.value) {
+  	atomicState.sensorState = "open"
+  
+	if(atomicState.isDelayed == false) {
+        // contact was opened, turn on a light maybe?
+        log.debug "Contact is in ${evt.value} state"
+        // trigger alarm
+        targetAlarms.on()
+    }
+  } else if("closed" == evt.value) {
+  	atomicState.sensorState = "closed"
   }
 }
 
@@ -89,6 +95,12 @@ def buttonHandler(evt) {
 }
 
 def scheduleFinishedHandler(evt) {
+    log.debug "schedule was triggered"
 	atomicState.isDelayed = false
-    targetAlarms.strobe()
+    targetAlarms.off()
+    
+    if(atomicState.sensorState == "open") {
+        log.debug "contact was open during schedule handler"
+    	targetAlarms.on()
+    }
 }
