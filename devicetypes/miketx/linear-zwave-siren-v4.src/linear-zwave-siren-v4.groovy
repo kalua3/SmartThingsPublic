@@ -109,7 +109,6 @@ def setboth() {
      
 }
 
-
 def off() {
 	log.debug "sending off"
 	[
@@ -118,6 +117,23 @@ def off() {
 	]
 }
 def on() {
+	log.debug "restoring last alarm type configuration"
+    /*
+	switch(state.LastAlarmtype) {
+    	case 0:
+        	zwave.configurationV1.configurationSet(parameterNumber: 0, size: 1, configurationValue: [0]).format()
+            break
+        case 1:
+        	zwave.configurationV1.configurationSet(parameterNumber: 0, size: 1, configurationValue: [1]).format()
+            break
+        case 2:
+        	zwave.configurationV1.configurationSet(parameterNumber: 0, size: 1, configurationValue: [2]).format()
+            break
+        default:
+        	zwave.configurationV1.configurationSet(parameterNumber: 0, size: 1, configurationValue: [0]).format()
+            break
+    }
+    */
 	log.debug "sending on"
 	[
 		zwave.basicV1.basicSet(value: 0xff).format(),
@@ -126,11 +142,22 @@ def on() {
 }
 
 def both() {
-	log.debug "sending alarm on via both"
-	[
-		zwave.basicV1.basicSet(value: 0xff).format(),
-		zwave.basicV1.basicGet().format()
-	]
+	delayBetween([
+    	setboth(),
+        on()], 100)
+    
+}
+
+def strobe() {
+	delayBetween([
+    	setstrobe(),
+        on()], 100)
+}
+
+def siren() {
+	delayBetween([
+    	setsiren(),
+        on()], 100)
 }
 
 def parse(String description) {
