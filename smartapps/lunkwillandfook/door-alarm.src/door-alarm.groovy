@@ -61,12 +61,13 @@ def initialize() {
 }
 
 def contactHandler(evt) {
+  log.debut "Contact is in ${evt.value} state"
   if("open" == evt.value) {
   	atomicState.sensorState = "open"
   
 	if(atomicState.isDelayed == false) {
         // contact was opened, turn on a light maybe?
-        log.debug "Contact is in ${evt.value} state and delay is ${atomicState.isDelayed}"
+        log.debug "Delay is ${atomicState.isDelayed}"
         // trigger alarm
         targetAlarms.both()
         //targetAlarms.on()
