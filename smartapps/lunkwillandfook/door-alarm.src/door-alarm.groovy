@@ -24,7 +24,7 @@ preferences {
             input(name: "targetSensor", type: "capability.contactSensor", title: "Open/Closed Sensor", multiple: false, required: true)
         }
         section("Sound these sirens...") {
-            input(name: "targetAlarms", type: "capability.switch", title: "Alarms", multiple: true, required: true)
+            input(name: "targetAlarms", type: "capability.alarm", title: "Alarms", multiple: true, required: true)
         }
         section("Unless one of these buttons is pressed or held...") {
             input(name: "targetButtons", type: "capability.button", title: "Buttons", multiple: true, required: true)
@@ -66,9 +66,10 @@ def contactHandler(evt) {
   
 	if(atomicState.isDelayed == false) {
         // contact was opened, turn on a light maybe?
-        log.debug "Contact is in ${evt.value} state"
+        log.debug "Contact is in ${evt.value} state and delay is ${atomicState.isDelayed}"
         // trigger alarm
-        targetAlarms.on()
+        targetAlarms.both()
+        //targetAlarms.on()
     }
   } else if("closed" == evt.value) {
   	atomicState.sensorState = "closed"
@@ -89,6 +90,7 @@ def buttonHandler(evt) {
     schedule(now() + (buttonPushedDelay * 1000), scheduleFinishedHandler)
   }
   
+  log.debug "is flash strobe when delayed: ${isFlashStrobeWhenDelayed}"
   if(isFlashStrobeWhenDelayed) {
   	targetAlarms.strobe()
   }
@@ -101,6 +103,7 @@ def scheduleFinishedHandler(evt) {
     
     if(atomicState.sensorState == "open") {
         log.debug "contact was open during schedule handler"
-    	targetAlarms.on()
+    	targetAlarms.both()
+        //targetAlarms.on()
     }
 }
