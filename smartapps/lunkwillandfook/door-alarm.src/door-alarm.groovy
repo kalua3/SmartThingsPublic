@@ -61,7 +61,7 @@ def initialize() {
 }
 
 def contactHandler(evt) {
-  log.debut "Contact is in ${evt.value} state"
+  log.debug "Contact is in ${evt.value} state"
   if("open" == evt.value) {
   	atomicState.sensorState = "open"
   
@@ -74,6 +74,12 @@ def contactHandler(evt) {
     }
   } else if("closed" == evt.value) {
   	atomicState.sensorState = "closed"
+    
+    if(atomicState.isDelayed == true) {
+        log.debug "door closed. turning off delay and strobe."
+    	atomicState.isDelayed = false
+        targetAlarms.off()
+    }
   }
 }
 
@@ -98,13 +104,15 @@ def buttonHandler(evt) {
 }
 
 def scheduleFinishedHandler(evt) {
-    log.debug "schedule was triggered"
-	atomicState.isDelayed = false
-    targetAlarms.off()
-    
-    if(atomicState.sensorState == "open") {
-        log.debug "contact was open during schedule handler"
-    	targetAlarms.both()
-        //targetAlarms.on()
+    if(atomicState.isDelayed == true) {
+        log.debug "schedule was triggered and isDelayed is ${atomicState.isDelayed}"
+        atomicState.isDelayed = false
+        targetAlarms.off()
+
+        if(atomicState.sensorState == "open") {
+            log.debug "contact was open during schedule handler"
+            targetAlarms.both()
+            //targetAlarms.on()
+        }
     }
 }
