@@ -1,5 +1,5 @@
 /**
- *  Ghost Lights
+ *  Door Alarm
  *
  *  Copyright 2015 Jeremy Huckeba
  *
