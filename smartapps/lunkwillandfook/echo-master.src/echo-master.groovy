@@ -221,6 +221,24 @@ def updated() {
 }
 
 // returns a list like
+// [[name: "thermostat", temperature: "74", heatingSetpoint: "70", coolingSetpoint: "76", thermostatSetpoint: "74", thermostatMode: "range", thermostatFanMode: "auto", thermostatOperatingState: "cooling", scale: "F"]]
+def listThermostats() {
+    def resp = []
+    if(params.name == null) {
+        selectedTemperatureSensors.each {
+          resp << [name: it.displayName, temperature: it.currentValue("temperature"), heatingSetpoint: it.currentValue("heatingSetpoint"), coolingSetpoint: it.currentValue("coolingSetpoint"), thermostatSetpoint: it.currentValue("thermostatSetpoint"), thermostatMode: it.currentValue("thermostatMode"), thermostatFanMode: it.currentValue("thermostatFanMode"), thermostatOperatingState: it.currentValue("thermostatOperatingState"), scale: location.temperatureScale]
+        }
+    } else {
+    	selectedTemperatureSensors.each {
+        	if(it.displayName.toLowerCase() == params.name.toLowerCase()) {
+            	resp << [name: it.displayName, temperature: it.currentValue("temperature"), heatingSetpoint: it.currentValue("heatingSetpoint"), coolingSetpoint: it.currentValue("coolingSetpoint"), thermostatSetpoint: it.currentValue("thermostatSetpoint"), thermostatMode: it.currentValue("thermostatMode"), thermostatFanMode: it.currentValue("thermostatFanMode"), thermostatOperatingState: it.currentValue("thermostatOperatingState"), scale: location.temperatureScale]
+            }
+        }
+    }
+    return resp
+}
+
+// returns a list like
 // [[name: "front door", value: "65"], [name: "smoke detector", value: "30"]]
 def listLowBatteries() {
     def level = 20;
