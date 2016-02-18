@@ -53,8 +53,14 @@ preferences(oauthPage: "deviceAuthorization") {
         section ("Allow Alexa to read these contact sensors...") {
             input "selectedContactSensors", "capability.contactSensor", multiple: true, required: false
         }
+        section ("Allow Alexa to read these humidity sensors...") {
+            input "selectedHumiditySensors", "capability.relativeHumidityMeasurement", multiple: true, required: false
+        }
         section ("Allow Alexa to read these temperature sensors...") {
             input "selectedTemperatureSensors", "capability.temperatureMeasurement", multiple: true, required: false
+        }
+        section ("Allow Alexa to read these humidity sensors...") {
+            input "selectedTemperatureSensors", "capability.relativeHumidityMeasurement", multiple: true, required: false
         }
         section ("Allow Alexa to read these water sensors...") {
             input "selectedWaterSensors", "capability.waterSensor", multiple: true, required: false
@@ -130,6 +136,16 @@ mappings {
   path("/thermostats/:name") {
   	action: [
       GET: "listThermostats"
+    ]
+  }
+  path("/humiditySensors/:name") {
+    action: [
+      GET: "listHumiditySensors"
+    ]
+  }
+  path("/humiditySensors") {
+    action: [
+      GET: "listHumiditySensors"
     ]
   }
   path("/temperatureSensors/:name") {
@@ -262,6 +278,24 @@ def listTemperatureSensors() {
     	selectedTemperatureSensors.each {
         	if(it.displayName.toLowerCase() == params.name.toLowerCase()) {
             	resp << [name: it.displayName, value: it.currentValue("temperature"), scale: location.temperatureScale]
+            }
+        }
+    }
+    return resp
+}
+
+// returns a list like
+// [[name: "nest thermostat", value: "48"], [name: "bathroom sensor", value: "76"]]
+def listHumiditySensors() {
+    def resp = []
+    if(params.name == null) {
+        selectedHumiditySensors.each {
+          resp << [name: it.displayName, value: it.currentValue("humidity")]
+        }
+    } else {
+    	selectedHumiditySensors.each {
+        	if(it.displayName.toLowerCase() == params.name.toLowerCase()) {
+            	resp << [name: it.displayName, value: it.currentValue("humidity")]
             }
         }
     }
