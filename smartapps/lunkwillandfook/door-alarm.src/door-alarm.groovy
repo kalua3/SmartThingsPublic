@@ -56,8 +56,10 @@ def updated() {
 def initialize() {
 	unschedule()
     atomicState.isDelayed = false
+    atomicState.isAlarmTripped = false
     subscribe(targetSensor, "contact", contactHandler)
     subscribe(targetButtons, "button", buttonHandler)
+    subscribe(targetAlarms, "alarm", alarmHandler)
 }
 
 def contactHandler(evt) {
@@ -70,21 +72,37 @@ def contactHandler(evt) {
         log.debug "Delay is ${atomicState.isDelayed}"
         // trigger alarm
         targetAlarms.both()
+        atomicState.isAlarmTripped = true
         //targetAlarms.on()
     }
   } else if("closed" == evt.value) {
   	atomicState.sensorState = "closed"
     
     if(atomicState.isDelayed == true) {
-        log.debug "door closed. turning off delay and strobe."
-    	atomicState.isDelayed = false
-        targetAlarms.off()
+        log.debug "door closed. turning off delay."
+        
+        atomicState.isDelayed = false
+        
+        // check if a siren is on
+        def isAlarmSirenOn = false
+        targetAlarms.each { it ->
+          if(it.alarm == "siren" || it.alarm == "both") {
+          	log.debug "an alarm siren is on, don't turn off strobe or alarm"
+          	isAlarmSirenOn = true
+          }
+        }
+        
+        // only turn off alarm if sirens are off
+        if(isAlarmSirenOn == false) {
+        	log.debug "turning target alarms off"
+        	targetAlarms.off()
+        }
     }
   }
 }
 
 def buttonHandler(evt) {
-  if(doesButtonPressStopAlarm) {
+  if(doesButtonPressStopAlarm && atomicState.isAlarmTripped == true) {
   	targetAlarms.off()
   }
   
@@ -103,6 +121,14 @@ def buttonHandler(evt) {
   }
 }
 
+def alarmHandler(evt) {
+  log.debug "Alarm is in ${evt.value} state"
+  
+  if(evt.value == "off") {
+  	atomicState.isAlarmTripped
+  }
+}
+
 def scheduleFinishedHandler(evt) {
     if(atomicState.isDelayed == true) {
         log.debug "schedule was triggered and isDelayed is ${atomicState.isDelayed}"
@@ -112,7 +138,7 @@ def scheduleFinishedHandler(evt) {
         if(atomicState.sensorState == "open") {
             log.debug "contact was open during schedule handler"
             targetAlarms.both()
-            //targetAlarms.on()
+            atomicState.isAlarmTripped = true
         }
     }
 }
