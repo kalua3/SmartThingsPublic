@@ -47,9 +47,9 @@ preferences(oauthPage: "deviceAuthorization") {
         section ("Allow Alexa to control these thermostats...") {
             input "selectedThermostats", "capability.thermostat", multiple: true, required: false
         }
-        section ("Allow Alexa to control these colored bulbs...") {
-            input "selectedColorControls", "capability.colorControl", multiple: true, required: false
-        }
+        //section ("Allow Alexa to control these colored bulbs...") {
+        //    input "selectedColorControls", "capability.colorControl", multiple: true, required: false
+        //}
         section ("Allow Alexa to read these contact sensors...") {
             input "selectedContactSensors", "capability.contactSensor", multiple: true, required: false
         }
@@ -59,12 +59,9 @@ preferences(oauthPage: "deviceAuthorization") {
         section ("Allow Alexa to read these temperature sensors...") {
             input "selectedTemperatureSensors", "capability.temperatureMeasurement", multiple: true, required: false
         }
-        section ("Allow Alexa to read these humidity sensors...") {
-            input "selectedTemperatureSensors", "capability.relativeHumidityMeasurement", multiple: true, required: false
-        }
-        section ("Allow Alexa to read these water sensors...") {
-            input "selectedWaterSensors", "capability.waterSensor", multiple: true, required: false
-        }
+        //section ("Allow Alexa to read these water sensors...") {
+        //    input "selectedWaterSensors", "capability.waterSensor", multiple: true, required: false
+        //}
        section ("Allow Alexa to read these smoke detectors...") {
             input "selectedSmokeDetectors", "capability.smokeDetector", multiple: true, required: false
         }
@@ -92,21 +89,9 @@ def phrasesPage() {
 	def actions = selectedRoutines;
 
     dynamicPage(name: "phrasesPage", uninstall: true, install: true) {
-		section("I'm leaving...") {
-        	input(name: "leavingPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
-            input(name: "leavingPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
-        }
-        section("I'm watching a movie...") {
-        	input(name: "watchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
-            input(name: "watchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false) 
-        }
-        section("I'm finished watching a movie...") {
-        	input(name: "finishedWatchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
-            input(name: "finishedWatchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
-        }
-        section("I'm having a party...") {
-        	input(name: "havingPartyPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
-            input(name: "havingPartyPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+		section("I'm awake...") {
+        	input(name: "awakePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "awakePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
         section("I'm back...") {
         	input(name: "backPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
@@ -116,13 +101,25 @@ def phrasesPage() {
         	input(name: "cleaningPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
             input(name: "cleaningPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
+        section("I'm finished watching a movie...") {
+        	input(name: "finishedWatchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "finishedWatchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        }
 		section("I'm going to sleep...") {
         	input(name: "sleepPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
             input(name: "sleepPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
         }
-		section("I'm awake...") {
-        	input(name: "awakePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
-            input(name: "awakePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        section("I'm having a party...") {
+        	input(name: "havingPartyPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "havingPartyPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        }        
+		section("I'm leaving...") {
+        	input(name: "leavingPhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "leavingPhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false)
+        }
+        section("I'm watching a movie...") {
+        	input(name: "watchingMoviePhraseDelay", type: "number", title: "Wait x minutes...", range: "0..60", required: false)
+            input(name: "watchingMoviePhraseRoutine", type: "enum", title: "Run this routine...", options: actions, required: false, multiple: false) 
         }
     }
 }
@@ -223,6 +220,7 @@ def updated() {
 // returns a list like
 // [[name: "thermostat", temperature: "74", heatingSetpoint: "70", coolingSetpoint: "76", thermostatSetpoint: "74", thermostatMode: "range", thermostatFanMode: "auto", thermostatOperatingState: "cooling", scale: "F"]]
 def listThermostats() {
+	log.debug "listing thermostats: ${selectedThermostats}"
     def resp = []
     if(params.name == null) {
         selectedTemperatureSensors.each {
@@ -245,6 +243,8 @@ def listLowBatteries() {
 	if(params.level != null) {
     	level = new BigDecimal(params.level.replaceAll(",", ""))
     }
+    
+    log.debug "listing selected devices ${selectedBatteries} with a battery under ${level} percent"
 	
     def resp = []
     selectedBatteries.each {
@@ -259,6 +259,7 @@ def listLowBatteries() {
 // returns a list like
 // [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
 def listSwitches() {
+    log.debug "listing switches: ${selectedSwitches}"
     def resp = []
     selectedSwitches.each {
       resp << [name: it.displayName, value: it.currentValue("switch")]
@@ -269,6 +270,7 @@ def listSwitches() {
 // returns a list like
 // [[name: "front door", value: "closed"], [name: "back door", value: "opened"]]
 def listContactSensors() {
+    log.debug "listing contact sensors: ${selectedContactSensors}"
     def resp = []
     if(params.name == null) {
         selectedContactSensors.each {
@@ -287,6 +289,7 @@ def listContactSensors() {
 // returns a list like
 // [[name: "front door", value: "74", scale: "F"], [name: "back door", value: "76", scale: "F"]]
 def listTemperatureSensors() {
+    log.debug "listing temperature sensors: ${selectedTemperatureSensors}"
     def resp = []
     if(params.name == null) {
         selectedTemperatureSensors.each {
@@ -305,6 +308,7 @@ def listTemperatureSensors() {
 // returns a list like
 // [[name: "nest thermostat", value: "48"], [name: "bathroom sensor", value: "76"]]
 def listHumiditySensors() {
+    log.debug "listing humidity sensors: ${selectedHumiditySensors}"
     def resp = []
     if(params.name == null) {
         selectedHumiditySensors.each {
@@ -323,7 +327,7 @@ def listHumiditySensors() {
 // returns a list like
 // [[name: "goodbye"], [name: "good morning"]]
 def listRoutines() {
-    log.debug "listTemperatureSensors: $listRoutines"
+    log.debug "listRoutines: $selectedRoutines"
     def resp = []
     selectedRoutines.each {
       resp << [name: it]
@@ -386,6 +390,8 @@ def executePhrase() {
     def phraseTitle = null
     def phraseHandler = null
     
+    log.debug "Executing phrase ${name}"
+    
     switch(name) {
     	case "leaving":
         	delay = leavingPhraseDelay
@@ -433,7 +439,7 @@ def executePhrase() {
         	delay = awakePhraseDelay
             routineName = awakePhraseRoutine
             phraseTitle = AWAKEPHRASETITLE
-            phraseHandler = "runScheduleAwakePhraseHandler"
+            phraseHandler = "runScheduledAwakePhraseHandler"
             break
         default:
         	isValidPhrase = false
@@ -453,7 +459,7 @@ def executePhrase() {
         
         if(canExecute) {
         	if(delay == null || delay == 0) {
-            	location.helloHome?.execute(executeName)
+            	runIn(1, phraseHandler)
             } else {
             	runIn(delay * 60, phraseHandler)
             }
@@ -484,7 +490,7 @@ def runScheduledLeavingPhraseHandler() {
     
     if(canExecute) {
     	log.trace "$leavingPhraseRoutine"
-    	location.helloHome?.execute(leavingPhraseRoutinee)
+    	location.helloHome?.execute(leavingPhraseRoutine)
     }
 }
 
