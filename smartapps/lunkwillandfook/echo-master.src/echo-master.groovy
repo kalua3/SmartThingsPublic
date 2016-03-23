@@ -160,7 +160,12 @@ mappings {
       GET: "listSwitches"
     ]
   }
-  path("/switches/:name/:command") {
+  path("/switchCommand/:name/:command") {
+    action: [
+      PUT: "updateSwitch"
+    ]
+  }
+  path("/switchLevel/:name/:command/:level") {
     action: [
       PUT: "updateSwitch"
     ]
@@ -336,7 +341,7 @@ def listRoutines() {
 }
 
 // not used. reserved for future use
-void updateSwitches() {
+void updateSwitch() {
     // use the built-in request object to get the command parameter
     def name = params.name
     def command = params.command
