@@ -3,6 +3,7 @@
  *
  *  Author: danny@smartthings.com
  *  Author: brian@bevey.org
+ *  Author: LunkwillAndFook
  *  Date: 5/2/14
  *
  *  Modified example Foscam device type to support dynamic input of credentials
@@ -14,7 +15,8 @@
  *  Capability: Image Capture, Polling
  *  Custom Attributes: setStatus, alarmStatus
  *  Custom Commands: alarmOn, alarmOff, toggleAlarm, left, right, up, down,
- *                   pause, set, preset, preset1, preset2, preset3
+ *                   pause, infraredOn, infraredOff, set, preset, preset1, 
+ *                   preset2, preset3
  */
 
 metadata {
@@ -34,6 +36,8 @@ metadata {
     command "up"
     command "down"
     command "pause"
+    command "infraredOn"
+    command "infraredOff"
     command "set"
     command "preset"
     command "preset1"
@@ -49,10 +53,6 @@ metadata {
   }
 
   tiles {
-  	standardTile("image", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: true) {
-	  state "default", label: "", action: "", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
-	}
-  
     carouselTile("cameraDetails", "device.image", width: 3, height: 2) { }
 
     standardTile("camera", "device.image", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: false) {
@@ -65,11 +65,6 @@ metadata {
 
     standardTile("up", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
       state "take", label: "up", action: "up", icon: ""
-    }
-
-    standardTile("alarmStatus", "device.alarmStatus", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: false) {
-      state "off", label: "off", action: "toggleAlarm", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
-      state "on", label: "on", action: "toggleAlarm", icon: "st.camera.dropcam-centered",  backgroundColor: "#53A7C0"
     }
 
     standardTile("left", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
@@ -89,12 +84,15 @@ metadata {
     }
 
     standardTile("down", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-      state "down", label: "down", action: "down", icon: ""
+      state "take", label: "down", action: "down", icon: ""
     }
-
-    standardTile("set", "device.setStatus", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
-      state "set", label: "set", action: "set", icon: "",  backgroundColor: "#FFFFFF"
-      state "setting", label: "set mode", action: "set", icon: "", backgroundColor: "#53A7C0"
+    
+    standardTile("infraredOn", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
+      state "infraredOn", label: "night", action: "infraredOn", icon: "http://cdn.device-icons.smartthings.com/Weather/weather4-icn@2x.png"
+    }
+    
+    standardTile("infraredOff", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
+      state "infraredOff", label: "day", action: "infraredOff", icon: "http://cdn.device-icons.smartthings.com/Weather/weather14-icn@2x.png"
     }
 
     standardTile("preset1", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
@@ -112,10 +110,20 @@ metadata {
     standardTile("refresh", "device.alarmStatus", inactiveLabel: false, decoration: "flat") {
       state "default", action:"polling.poll", icon:"st.secondary.refresh"
     }
+    
+    standardTile("alarmStatus", "device.alarmStatus", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: false) {
+      state "off", label: "off", action: "toggleAlarm", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
+      state "on", label: "on", action: "toggleAlarm", icon: "st.camera.dropcam-centered",  backgroundColor: "#53A7C0"
+    }
+    
+    standardTile("set", "device.setStatus", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
+      state "set", label: "set", action: "set", icon: "",  backgroundColor: "#FFFFFF"
+      state "setting", label: "set mode", action: "set", icon: "", backgroundColor: "#53A7C0"
+    }
 
-    main "image"
+    main "alarmStatus"
 
-    details(["cameraDetails", "take", "up", "alarmStatus", "left", "pause", "right", "blank", "down", "set", "preset1", "preset2", "preset3", "refresh"])
+    details(["cameraDetails", "take", "up", "alarmStatus", "left", "pause", "right", "infraredOff", "down", "infraredOn", "preset1", "preset2", "preset3", "set", "refresh"])
   }
 }
 
@@ -190,6 +198,18 @@ def pause() {
   api("decoder_control", "command=1") {}
 }
 
+def infraredOn() {
+  api("decoder_control", "command=95") {
+    log.debug("Executing infrared on")
+  }
+}
+
+def infraredOff() {
+  api("decoder_control", "command=94") {
+    log.debug("Executing infrared off")
+  }
+}
+
 def preset1() {
   preset(1)
 }
@@ -253,9 +273,8 @@ def api(method, args = [], success = {}) {
     "get_params":      [uri: "http://${ip}:${port}/get_params.cgi${login()}",              type: "get"],
     "videostream":     [uri: "http://${ip}:${port}/videostream.cgi${login()}",             type: "get"]
   ]
-
+  
   def request = methods.getAt(method)
-
   doRequest(request.uri, request.type, success)
 }
 
