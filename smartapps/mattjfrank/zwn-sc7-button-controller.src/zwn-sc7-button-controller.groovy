@@ -78,8 +78,10 @@ def getButtonSections(buttonNumber) {
     }
       section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
       input "lights_${buttonNumber}_on", "capability.switch", title: "switches:", multiple: true, required: false
+      input(name: "lights_${buttonNumber}_level", type: "enum", title: "set level to:", multiple: false, required: false, options: [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100])
       input "sonos_${buttonNumber}_on", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
+    
       section(title: "Turn off these...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
       input "lights_${buttonNumber}_off", "capability.switch", title: "switches:", multiple: true, required: false
       input "sonos_${buttonNumber}_off", "capability.musicPlayer", title: "music players:", multiple: true, required: false
@@ -200,22 +202,23 @@ def executeHandlers(buttonNumber) {
   if (sonos != null) toggle(sonos)
 
   lights = find('lights', buttonNumber, "on")
-  if (lights != null) flip(lights, "on")
+  def level = find('lights', buttonNumber, "level")
+  if (lights != null) flip(lights, "on", level)
 
   locks = find('locks', buttonNumber, "unlock")
-  if (locks != null) flip(locks, "unlock")
+  if (locks != null) flip(locks, "unlock", null)
 
   sonos = find('sonos', buttonNumber, "on")
-  if (sonos != null) flip(sonos, "on")
+  if (sonos != null) flip(sonos, "on", null)
 
   lights = find('lights', buttonNumber, "off")
-  if (lights != null) flip(lights, "off")
+  if (lights != null) flip(lights, "off", null)
 
   locks = find('locks', buttonNumber, "lock")
-  if (locks != null) flip(locks, "lock")
+  if (locks != null) flip(locks, "lock", null)
 
   sonos = find('sonos', buttonNumber, "off")
-  if (sonos != null) flip(sonos, "off")
+  if (sonos != null) flip(sonos, "off", null)
 
   def mode = find('mode', buttonNumber, "on")
   if (mode != null) changeMode(mode)
@@ -234,15 +237,18 @@ def find(type, buttonNumber, value) {
   return pref
 }
 
-def flip(devices, newState) {
+def flip(devices, newState, level) {
   log.debug "flip: $devices = ${devices*.currentValue('switch')}"
-
 
   if (newState == "off") {
     devices.off()
   }
   else if (newState == "on") {
-    devices.on()
+    if(level == null) {
+    	devices.on()
+    } else {
+    	devices.setLevel(level)
+    }
   }
   else if (newState == "unlock") {
     devices.unlock()
