@@ -145,8 +145,7 @@ def parse(String description) {
 def on() {
 	log.debug "on()"
 	sendEvent(name: "switch", value: "on")
-    //setLevel(state?.levelValue)
-    boltsScore()
+    setLevel(state?.levelValue)
 }
 
 def zigbeeOff() {
@@ -437,7 +436,7 @@ def setAdjustedColor(value) {
 
 def setColor(value, transitionTime){
     state?.colorType = "rgb"
-	log.trace "setColor($value)"
+	log.trace "setColor($value, $transitionTime)"
 	def max = 0xfe
 
     if (value.hex) { sendEvent(name: "color", value: value.hex, displayed:false)}
