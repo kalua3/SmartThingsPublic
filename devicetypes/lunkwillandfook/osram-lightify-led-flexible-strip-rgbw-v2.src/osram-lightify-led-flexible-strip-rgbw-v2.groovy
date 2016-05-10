@@ -19,11 +19,11 @@ metadata {
 		capability "Color Control"
                         
         attribute "colorName", "string"
+        attribute "boltsScore", "string"
         //attribute "colorTemperature", "number"
 
         command "setAdjustedColor"
-        command "colorTempUp"
-        command "colorTempDown"
+        command "goBolts"
 
 
 		//fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0006,0008,0300,0B04,FC0F", outClusters: "0019", manufacturer: "OSRAM", model: "LIGHTIFY Flex RGBW"
@@ -59,7 +59,7 @@ metadata {
                 attributeState "level", action:"switch level.setLevel"
             }
             tileAttribute ("device.color", key: "COLOR_CONTROL") {
-                attributeState "color", action:"setColor"
+                attributeState "color", action:"setAdjustedColor"
             }
             tileAttribute("device.colorName", key: "SECONDARY_CONTROL") {
             	attributeState("default", label:'${currentValue}')
@@ -83,9 +83,9 @@ metadata {
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-		standardTile("goBolts", "device.switch", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
-			state "default", label:"go bolts!", action:"goBolts", icon:"st.Weather.weather10"
-		}
+		//standardTile("goBolts", "device.switch", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
+		//	state "default", label:"go bolts!", action:"goBolts", icon:"st.Weather.weather10"
+		//}
 
         //controlTile("rgbSelector", "device.color", "color", height: 3, width: 3, inactiveLabel: false) {
 		//	state "color", action:"setAdjustedColor"
@@ -103,16 +103,6 @@ metadata {
 		//details(["switch", "refresh", "colorName", "levelSliderControl", "level", "colorTempSliderControl", "colorTemp", "rgbSelector"])
         details(["switch", "colorTempSliderControl", "colorTemp", "colorName", "refresh", "goBolts"])
 	}
-}
-
-def colorTempUp() {
-	def temp = state.colorTemperature
-    log.trace "color value: $temp"
-}
-
-def colorTempDown() {
-	def temp = state.colorTemperature
-    log.trace "color value: $temp"
 }
 
 // Parse incoming device messages to generate events
@@ -276,7 +266,7 @@ def poll(){
 }
 
 def zigbeeSetLevel(level, transitionTimeSeconds) {
-	log.trace "zigbeeSetLevel($level)"
+	log.trace "zigbeeSetLevel($level, $transitionTimeSeconds)"
     if(transitionTimeSeconds != null) {
     	def transitionValue = transitionTimeSeconds * 1000
         "st cmd 0x${device.deviceNetworkId} ${endpointId} 8 4 {${level} ${transitionValue}}"
@@ -532,23 +522,22 @@ def setColor(value) {
 	setColor(value, defaultTransitionTime)
 }
 
-def boltsScore() {
+def goBolts() {
     def max = 0xfe   
     def maxLevel = "ff"
     def scaledBlueHueValue = evenHex(Math.round(65.882355 * max / 100.0))
 	def scaledBlueSatValue = evenHex(Math.round(100.0 * max / 100.0))
     def lightningBlueValue = [level:100, red:0, hex:"#0011FF", saturation:100.0, blue:255, green:17, hue:65.55556, alpha:1.0]
 
-	log.trace "lightningHex: ${lightningHex}"
+	sendEvent(name: "boltsScore", value: "Gooooooal!")
 
-    def cmds = []
-    
+    def cmds = []    
     cmds << "st cmd 0x1550 3 0x0300 0x0a {9a00 0000}"
-    cmds << "delay 50"
+    cmds << "delay 150"
     cmds << setColor(lightningBlueValue, null)
-    cmds << "delay 200"
+    cmds << "delay 150"
     cmds << "st cmd 0x1550 3 0x0300 0x0a {9a00 0000}"
-    cmds << "delay 25"
+    cmds << "delay 150"
     cmds << setColor(lightningBlueValue, null)
     cmds << "delay 150"
     cmds << "st cmd 0x1550 3 0x0300 0x0a {9a00 0000}"
@@ -557,7 +546,7 @@ def boltsScore() {
     cmds << "delay 150"
     cmds << "st cmd 0x1550 3 0x0300 0x0a {9a00 0000}"
     cmds << "delay 25"
-    cmds << setColor(lightningBlueValue, null)
+    //cmds << setColor(lightningBlueValue, null)
 //    cmds << "st cmd 0x${device.deviceNetworkId} ${endpointId} 6 0 {}"
 //    cmds << setColor(lightningBlueValue, 1000)
 //    cmds << "delay 150"
