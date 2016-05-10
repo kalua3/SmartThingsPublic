@@ -17,15 +17,15 @@ definition(
 preferences {
 	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
     	section() {
-        	input(name: "selectedColorControls", type: "capability.colorControl", title: "Chase these color controls", multiple: true, required: true)
-            input(name: "firstColor", type: "enum", title: "Color 1", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
-            input(name: "firstColorSaturation", type: "number", title: "Saturation 1", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "secondColor", type: "enum", title: "Color 2", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
-            input(name: "secondColorSaturation", type: "number", title: "Saturation 2", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "thirdColor", type: "enum", title: "Color", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            input(name: "thirdColorSaturation", type: "number", title: "Saturation 3", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "fourthColor", type: "enum", title: "Color", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            input(name: "fourthColorSaturation", type: "number", title: "Saturation 4", range:"0..100", defaultValue: 100, multiple: false, required: true)
+        	input(name: "selectedColorControls", type: "capability.colorControl, capability.colorTemperature", title: "Chase these color controls", multiple: true, required: true)
+            input(name: "firstColor", type: "enum", title: "Color 1", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
+            //input(name: "firstColorSaturation", type: "number", title: "Saturation 1", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "secondColor", type: "enum", title: "Color 2", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
+            //input(name: "secondColorSaturation", type: "number", title: "Saturation 2", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "thirdColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+            //input(name: "thirdColorSaturation", type: "number", title: "Saturation 3", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "fourthColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+            //input(name: "fourthColorSaturation", type: "number", title: "Saturation 4", range:"0..100", defaultValue: 100, multiple: false, required: true)
         }
     }
 	page(name: "page2", title: "Timing", uninstall: true, install: true) {
@@ -158,38 +158,46 @@ def changeColor() {
     }
     
     atomicState.currentColorIndex = atomicState.currentColorIndex + 1
-    
+
     def hueValue = 0
-    def satValue = 100
+    //def satValue = 100.doubleValue()
     def colorName = ""
     switch(atomicState.currentColorIndex) {
     	case 1:
-        	hueValue = getHue(firstColor)
-            satValue = firstColorSaturation
+            //satValue = firstColorSaturation.doubleValue()
             colorName = firstColor
             break
         case 2:
-        	hueValue = getHue(secondColor)
-            satValue = secondColorSaturation
+            //satValue = secondColorSaturation.doubleValue()
             colorName = secondColor
             break
         case 3:
-        	hueValue = getHue(thirdColor)
-            satValue = thirdColorSaturation
+            //satValue = thirdColorSaturation.doubleValue()
             colorName = thirdColor
             break
         case 4:
-        	hueValue = getHue(fourthColor)
-            satValue = fourthColorSaturation
+            //satValue = fourthColorSaturation.doubleValue()
             colorName = fourthColor
             break
     }
     
-    def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
-    def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
-    
-    log.trace "Changing color to $colorName with saturation of $satValue over $transitionTime seconds."
-    
-    selectedColorControls.setColor(colorValue, transitionTime)
-    selectedColorControls.setColor(colorSaturationValue, transitionTime)
+    if(colorName == "Soft White - Default" || colorName == "White - Concentrate" || colorName == "Daylight - Energize" || colorName == "Warm White - Relax") {
+    	def colorTemp = 2700
+        switch(colorName) {
+        	case "Warm White - Relax":
+            	colorTemp = 2700
+                break;
+            case "Cool White - Concentrate":
+            	colorTemp = 4100
+                break;
+            case "Daylight - Energize":
+            	colorTemp = 6500
+                break;
+        }
+        selectedColorControls.setColorTemperature(colorTemp, transitionTime)
+    } else {
+    	def colorValue = [level:null, saturation:100.0, hue:getHue(colorName), alpha:1.0]
+    	log.trace "Changing color to $colorName with a saturation of $satValue over $transitionTime seconds."
+    	selectedColorControls.setColor(colorValue, transitionTime)
+    }
 }
