@@ -38,6 +38,10 @@ metadata {
 		reply "zcl on-off on": "on/off: 1"
 		reply "zcl on-off off": "on/off: 0"
 	}
+    
+    preferences {
+       input "defaultTransitionTime", "decimal", title: "Transition Time (seconds)", description: "This is the sample input.", defaultValue: 1, range: "(0..3)", required: false, displayDuringSetup: true
+    }
 
 	// UI tile definitions
 	tiles {
@@ -167,7 +171,6 @@ def refresh() {
         "st rattr 0x${device.deviceNetworkId} ${endpointId} 0x0300 7", "delay 500",
         "st rattr 0x${device.deviceNetworkId} ${endpointId} 0x0300 8"
     ]
-
 }
 
 def configure() {
@@ -197,11 +200,6 @@ def setColorTemperature(value, transitionTimeSeconds) {
 	if(value<101){
     	value = (value*38) + 2700		//Calculation of mapping 0-100 to 2700-6500
     }
-    
-    def transitionValue = 2000
-    if(transitionTimeSeconds != null) {
-    	transitionValue = transitionTimeSeconds * 1000
-    }
 
     def tempInMired = Math.round(1000000/value)
     def finalHex = swapEndianHex(hex(tempInMired, 4))
@@ -211,15 +209,21 @@ def setColorTemperature(value, transitionTimeSeconds) {
     def cmds = []
     sendEvent(name: "colorTemperature", value: value, displayed:false)
     sendEvent(name: "colorName", value: genericName)
-
-	log.trace "setColorTemperature cmds: st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex} ${transitionValue}}"
-	cmds << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex} ${transitionValue}}"
-
+    
+    if(transitionTimeSeconds != null) {
+    	def transitionValue = transitionTimeSeconds * 1000
+		log.trace "setColorTemperature cmds: st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex} ${transitionValue}}"
+		cmds << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex} ${transitionValue}}"
+    } else {
+    	log.trace "setColorTemperature cmds: st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex}}"
+		cmds << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x0300 0x0a {${finalHex}}"
+    }
+    
     cmds
 }
 
 def setColorTemperature(value) {
-	setColorTemperature(value, null)
+	setColorTemperature(value, defaultTransitionTime)
 }
 
 def parseDescriptionAsMap(description) {
@@ -236,17 +240,17 @@ def poll(){
 
 def zigbeeSetLevel(level, transitionTimeSeconds) {
 	log.trace "zigbeeSetLevel($level)"
-	def transitionValue = 1500
     if(transitionTimeSeconds != null) {
-    	transitionValue = transitionTimeSeconds * 1000
+    	def transitionValue = transitionTimeSeconds * 1000
+        "st cmd 0x${device.deviceNetworkId} ${endpointId} 8 4 {${level} ${transitionValue}}"
+    } else {
+    	"st cmd 0x${device.deviceNetworkId} ${endpointId} 8 4 {${level}}"
     }
-
-    "st cmd 0x${device.deviceNetworkId} ${endpointId} 8 4 {${level} ${transitionValue}}"
 }
 
-def setLevel(value, transitionTimeSeconds) {
+def setLevel(def value, def transitionTimeSeconds) {
 	state.levelValue = (value==null) ? 100 : value
-	log.trace "setLevel($value)"
+	log.trace "setLevel($value, $transitionTimeSeconds)"
     log.trace "state.levelValue: ${state.levelValue}"
 	def cmds = []
 
@@ -266,8 +270,9 @@ def setLevel(value, transitionTimeSeconds) {
 	cmds
 }
 
-def setLevel(value) {
-	setLevel(value, null)
+def setLevel(def value) {
+	log.trace "setLevel($value)"
+	setLevel(value.toInteger(), defaultTransitionTime)
 }
 
 //Naming based on the wiki article here: http://en.wikipedia.org/wiki/Color_temperature
@@ -431,10 +436,10 @@ def setAdjustedColor(value) {
 	log.debug "setAdjustedColor: ${value}"
 	def adjusted = value + [:]
 	adjusted.level = null // needed because color picker always sends 100
-	setColor(adjusted)
+	setColor(adjusted, defaultTransitionTime)
 }
 
-def setColor(value, transitionTime){
+def setColor(value, transitionTimeSeconds) {
     state?.colorType = "rgb"
 	log.trace "setColor($value, $transitionTime)"
 	def max = 0xfe
@@ -458,10 +463,11 @@ def setColor(value, transitionTime){
 		cmd << "delay 150"
 	}
 
-	if(transitionTime != null) {
-		cmd << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x300 0x00 {${scaledHueValue} 00 ${transitionTime}}"
+	if(transitionTimeSeconds != null) {
+    	def transitionValue = transitionTimeSeconds * 1000
+		cmd << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x300 0x00 {${scaledHueValue} 00 ${transitionValue}}"
 		cmd << "delay 150"
-		cmd << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x300 0x03 {${scaledSatValue} ${transitionTime}}"
+		cmd << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x300 0x03 {${scaledSatValue} ${transitionValue}}"
     } else {
 		cmd << "st cmd 0x${device.deviceNetworkId} ${endpointId} 0x300 0x00 {${scaledHueValue} 00 0000}"
 		cmd << "delay 150"
@@ -486,7 +492,7 @@ def setColor(value, transitionTime){
 }
 
 def setColor(value) {
-	setColor(value, null)
+	setColor(value, defaultTransitionTime)
 }
 
 def boltsScore() {
