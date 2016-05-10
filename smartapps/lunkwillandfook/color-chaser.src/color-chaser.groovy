@@ -187,10 +187,9 @@ def changeColor() {
     
     def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
     def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
-    def transitionTimeValue = Math.round(transitionTime) * 1000
     
     log.trace "Changing color to $colorName with saturation of $satValue over $transitionTime seconds."
     
-    selectedColorControls.setColor(colorValue, transitionTimeValue)
-    selectedColorControls.setColor(colorSaturationValue, transitionTimeValue)
+    selectedColorControls.setColor(colorValue, transitionTime)
+    selectedColorControls.setColor(colorSaturationValue, transitionTime)
 }

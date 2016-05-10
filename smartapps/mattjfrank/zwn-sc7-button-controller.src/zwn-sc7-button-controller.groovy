@@ -71,26 +71,39 @@ def configureButton7() {
 
 def getButtonSections(buttonNumber) {
   return {
-      section(title: "Toggle these...", hidden: hideSection(buttonNumber, "toggle"), hideable: true) {
+    section(title: "Toggle these...", hidden: hideSection(buttonNumber, "toggle"), hideable: true) {
       input "lights_${buttonNumber}_toggle", "capability.switch", title: "switches:", multiple: true, required: false
       input "locks_${buttonNumber}_toggle", "capability.lock", title: "locks:", multiple: true, required: false
       input "sonos_${buttonNumber}_toggle", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
-      section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
+    section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
       input "lights_${buttonNumber}_on", "capability.switch", title: "switches:", multiple: true, required: false
-      input(name: "lights_${buttonNumber}_level", type: "enum", title: "set level to:", multiple: false, required: false, options: [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100])
+      input(name: "lights_${buttonNumber}_level", type: "number", title: "set level to:", multiple: false, required: false, range:"(1..100)")
       input "sonos_${buttonNumber}_on", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
-    
-      section(title: "Turn off these...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
+    section(title: "Turn off these...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
       input "lights_${buttonNumber}_off", "capability.switch", title: "switches:", multiple: true, required: false
       input "sonos_${buttonNumber}_off", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
-      section(title: "Locks:", hidden: hideLocksSection(buttonNumber), hideable: true) {
+    section(title: "Set these colors...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
+      input "colors1_${buttonNumber}_lights", "capability.colorControl", title: "first lights:", multiple: true, required: false
+      input(name: "colors1_${buttonNumber}_color", type: "enum", title: "first color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+      input(name: "colors1_${buttonNumber}_saturation", type: "number", title: "first saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+	  input "colors2_${buttonNumber}_lights", "capability.colorControl", title: "second lights:", multiple: true, required: false
+      input(name: "colors2_${buttonNumber}_color", type: "enum", title: "second color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+      input(name: "colors2_${buttonNumber}_saturation", type: "number", title: "second saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+	  input "colors3_${buttonNumber}_lights", "capability.colorControl", title: "third lights:", multiple: true, required: false
+      input(name: "colors3_${buttonNumber}_color", type: "enum", title: "third color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+      input(name: "colors3_${buttonNumber}_saturation", type: "number", title: "third saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+    }
+    section(title: "Set these color temperatures...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
+      input "colorTemp_${buttonNumber}_lights", "capability.colorControl", title: "lights:", multiple: true, required: false
+      input(name: "colorTemp_${buttonNumber}_color", type: "number", title: "color temp:", range:"(2700..6500)", multiple: false, required: false)
+    }
+    section(title: "Locks:", hidden: hideLocksSection(buttonNumber), hideable: true) {
       input "locks_${buttonNumber}_unlock", "capability.lock", title: "Unlock these locks:", multiple: true, required: false
       input "locks_${buttonNumber}_lock", "capability.lock", title: "Lock these locks:", multiple: true, required: false
     }
-
     section("Modes") {
       input "mode_${buttonNumber}_on", "mode", title: "Activate these modes:", required: false
     }
@@ -137,12 +150,26 @@ def buttonConfigured(idx) {
     settings["locks_$idx_toggle"] ||
     settings["sonos_$idx_toggle"] ||
     settings["mode_$idx_on"] ||
-        settings["lights_$idx_on"] ||
+    settings["lights_$idx_on"] ||
+    settings["lights_$idx_level"] ||
     settings["locks_$idx_on"] ||
     settings["sonos_$idx_on"] ||
-        settings["lights_$idx_off"] ||
+    settings["lights_$idx_off"] ||
     settings["locks_$idx_off"] ||
-    settings["sonos_$idx_off"]
+    settings["sonos_$idx_off"] ||
+    settings["colors1_$idx_lights"] ||
+    settings["colors1_$idx_color"] ||
+    settings["colors1_$idx_saturation"] ||
+	settings["colors2_$idx_lights"] ||
+    settings["colors2_$idx_color"] ||
+    settings["colors2_$idx_saturation"] ||
+	settings["colors3_$idx_lights"] ||
+    settings["colors3_$idx_color"] ||
+    settings["colors3_$idx_saturation"] ||
+    settings["colorTemp_$idx_lights"] ||
+    settings["colorTemp_$idx_color"] ||
+    settings["mode_$idx_on"] ||
+    settings["phrase_$idx_on"]
 }
 
 def buttonEvent(evt){
@@ -225,6 +252,25 @@ def executeHandlers(buttonNumber) {
 
   def phrase = find('phrase', buttonNumber, "on")
   if (phrase != null) location.helloHome.execute(phrase)
+  
+  def colors1Lights = find('colors1', buttonNumber, "lights")
+  def colors1Color = find('colors1', buttonNumber, "color")
+  def colors1Saturation = find('colors1', buttonNumber, "saturation")
+  if(colors1Lights != null && colors1Color != null && colors1Saturation != null) setColor(colors1Lights, colors1Color, colors1Saturation)
+  
+  def colors2Lights = find('colors2', buttonNumber, "lights")
+  def colors2Color = find('colors2', buttonNumber, "color")
+  def colors2Saturation = find('colors2', buttonNumber, "saturation")
+  if(colors2Lights != null && colors2Color != null && colors2Saturation != null) setColor(colors2Lights, colors2Color, colors2Saturation)
+  
+  def colors3Lights = find('colors3', buttonNumber, "lights")
+  def colors3Color = find('colors3', buttonNumber, "color")
+  def colors3Saturation = find('colors3', buttonNumber, "saturation")
+  if(colors3Lights != null && colors3Color != null && colors3Saturation != null) setColor(colors3Lights, colors3Color, colors3Saturation)
+  
+  def colorTempLights = find('colorTemp', buttonNumber, "lights")
+  def colorTempColor = find('colorTemp', buttonNumber, "color")
+  if(colorTempLights != null && colorTempColor != null) setColorTemperature(colorTempLights, colorTempColor)
 }
 
 def find(type, buttonNumber, value) {
@@ -352,4 +398,117 @@ private timeIntervalLabel() {
 
 private integer(String s) {
   return Integer.parseInt(s)
+}
+
+def getHue(colorName) {
+    def hueValue = 0.0
+    
+	if(colorName == "Red") {
+    	hueValue = 0
+    }
+    else if(colorName == "Brick Red") {
+    	hueValue = 13
+    }
+    else if(colorName == "Safety Orange") {
+    	hueValue = 26
+    }
+    else if(colorName == "Dark Orange") {
+    	hueValue = 36
+    }
+    else if(colorName == "Amber") {
+    	hueValue = 45
+    }
+    else if(colorName == "Gold") {
+    	hueValue = 53
+    }
+    else if(colorName == "Yellow") {
+    	hueValue = 61
+    }
+    else if(colorName == "Electric Lime") {
+    	hueValue = 75
+    }
+    else if(colorName == "Lawn Green") {
+    	hueValue = 89
+    }
+    else if(colorName == "Bright Green") {
+    	hueValue = 103
+    }
+    else if(colorName == "Lime") {
+    	hueValue = 124
+    }
+    else if(colorName == "Spring Green") {
+    	hueValue = 151
+    }
+    else if(colorName == "Turquoise") {
+    	hueValue = 169
+    }
+    else if(colorName == "Aqua") {
+    	hueValue = 180
+    }
+    else if(colorName == "Sky Blue") {
+    	hueValue = 196
+    }
+    else if(colorName == "Dodger Blue") {
+    	hueValue = 211
+    }
+    else if(colorName == "Navy Blue") {
+    	hueValue = 221
+    }
+    else if(colorName == "Blue") {
+    	hueValue = 238
+    }
+    else if(colorName == "Han Purple") {
+    	hueValue = 254
+    }
+    else if(colorName == "Electric Indigo") {
+    	hueValue = 266
+    }
+    else if(colorName == "Electric Purple") {
+    	hueValue = 282
+    }
+    else if(colorName == "Orchid Purple") {
+    	hueValue = 295
+    }
+	else if(colorName == "Magenta") {
+    	hueValue = 308
+    }
+    else if(colorName == "Hot Pink") {
+    	hueValue = 642
+    }
+    else if(colorName == "Deep Pink") {
+    	hueValue = 331
+    }
+    else if(colorName == "Raspberry") {
+    	hueValue = 338
+    }
+    else if(colorName == "Crimson") {
+    	hueValue = 346
+    }
+    
+    hueValue = Math.round(hueValue * 100 / 360)
+    
+    hueValue
+}
+
+def setColor(lights, colorName, saturation) {
+    def hueValue = getHue(colorName)
+    def satValue = saturation.toInteger()
+    
+    def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
+    def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
+    
+    log.trace "Changing color to $colorName with saturation of $satValue."
+    
+    lights.setColor(colorValue, null)
+    lights.setColor(colorSaturationValue, null)
+}
+
+def setColorTemperature(lights, colorTemp) {
+  
+    def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
+    def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
+    
+    log.trace "Changing color temperature to $colorTemp."
+    
+    lights.setColorTemperature(colorTemp, null)
 }
