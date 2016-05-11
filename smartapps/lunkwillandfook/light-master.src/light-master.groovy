@@ -18,34 +18,70 @@ preferences {
 	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
     	section() {
         	paragraph "Welcome. This app will let you configure dimming levels per-switch that will be set when the location changes to a specific mode. Just name this configuration, select a mode, select your switches, and select the levels you want to set. You can then create a routine in the SmartThings app to change the location mode." 
-    		label title: "Assign a name", required: false
+    		label title: "Assign a name", required: false, defaultValue: "Light Master"
         }
     }
 	page(name: "page2", title: "Mode and Switches", nextPage: "page3", uninstall: true) {
     	section() {
-        	input(name: "triggerMode", type: "mode", title: "Set for specific mode", multiple: false, required: true)
-            input(name: "selectedSwitches", type: "capability.switch", title: "Set these switches", multiple: true, required: true)
+        	input "triggerMode", "mode", title: "Set for specific mode", multiple: false, required: true
+            input "selectedSwitches", "capability.switch", title: "Set these switches", multiple: true, required: false
+            input "selectedColorControls", "capability.colorControl", title: "Set these color controls", multiple: true, required: false
+            input "selectedColorTemperatureControls", "capability.colorTemperature", title: "Set these color temperature controls", multiple: true, required: false
 	    }
 	}
     page(name: "page3", title: "Switch Levels", uninstall: true, nextPage: "page4")
 	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
     	section() {
-        	input(name: "setMode", type: "mode", title: "Then set this mode", multiple: false, required: false)
+        	input "setMode", "mode", title: "Then set this mode", multiple: false, required: false
 	    }
 	}
 }
 
 def page3() {
 	dynamicPage(name: "page3") {
-    	section() {
-        	def i = 0
-            selectedSwitches.each { selectedSwitch ->
-            	if(i < 20) {
-                	def inputName = "switchLevel$i"
-                    input(name: inputName, type: "enum", title: selectedSwitch.label, multiple: false, required: true, options: getSwitchLevelOptions(selectedSwitch))
-                    i++
+    	section("dimmer levels") {
+        	if(selectedSwitches != null) {
+                def i = 0
+                selectedSwitches.each { selectedSwitch ->
+                    if(i < 20) {
+                        def inputName = "switchLevel$i"
+                        input inputName, "enum", title: selectedSwitch.label, multiple: false, required: true, options: getSwitchLevelOptions(selectedSwitch)
+                        i++
+                    }
                 }
+            } else {
+             	paragraph "There are no switches selected."
             }
+        }
+		section("colors") {
+        	if(selectedColorControls != null) {
+                def i = 0
+                selectedColorControls.each { selectedControl ->
+                    if(i < 20) {
+                        def colorInputName = "color$i"
+                        def saturationInputName = "saturation$i"
+                        input colorInputName, "enum", title: "first color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+                        input saturationInputName, "number", title: selectedControl.label, range: "0..100", defaultValue: 100, multiple: false, required: true
+                        i++
+                    }
+                }
+             } else {
+             	paragraph "There are no color controls selected."
+             }
+        }
+        def i = 0
+        section("color temperatures") {
+        	if(selectedColorTemperatureControls != null) {
+                selectedColorTemperatureControls.each { selectedControl ->
+                    if(i < 20) {
+                        def inputName = "colorTemperature$i"
+                        input inputName, "number", title: selectedControl.label, range:"(2700..6500)", multiple: false, required: false
+                        i++
+                    }
+                }
+          } else {
+             	paragraph "There are no color temperature controls selected."
+             }
         }
     }
 }
@@ -53,7 +89,7 @@ def page3() {
 private getSwitchLevelOptions(selectedSwitch) {
 	if(selectedSwitch.hasCommand("setLevel")) {
     	// dimmable switch options
-        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "On" ]
+        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "100%" ]
     } else {
     	// relay switch options
         return ["Off", "On" ]
@@ -74,6 +110,7 @@ def updated() {
 }
 
 def initialize() {
+	log.debug "Initializing mode changed handler."
 	subscribe(location, "mode", modeChangeHandler)
 }
 
@@ -87,11 +124,31 @@ def modeChangeHandler(evt){
             }
             i++
         }
+        
+        i = 0
+    	selectedColorControls.each { selectedControl -> 
+        	if(i < 20) {
+        		setColor(selectedControl, i)
+            }
+            i++
+        }
+        
+        i = 0
+    	selectedColorTemperatureControls.each { selectedControl -> 
+        	if(i < 20) {
+        		setColorTemperature(selectedControl, i)
+            }
+            i++
+        }
+        
+        if(setMode != null) {
+    		location.setMode(setMode)
+    	}
     }
 }
 
 private setSwitchLevel(selectedSwitch, levelIndex) {
-	def desiredLevel = getLevel(levelIndex)
+    def desiredLevel = parseLevel(settings["switchLevel$levelIndex"])
 	if(selectedSwitch.hasCommand("setLevel")) {	
         selectedSwitch.setLevel(desiredLevel)
     } else {
@@ -101,63 +158,24 @@ private setSwitchLevel(selectedSwitch, levelIndex) {
         	selectedSwitch.off()
         }
     }
-    
-    if(setMode != null) {
-    	location.setMode(setMode)
-    }
 }
 
-private getLevel(levelIndex) {
-	def result = 0;
-    switch(levelIndex) {
-    	case 0:
-        	return parseLevel(switchLevel0)
-    	case 1:
-        	return parseLevel(switchLevel1)
-    	case 2:
-        	return parseLevel(switchLevel2)
-    	case 3:
-        	return parseLevel(switchLevel3)
-    	case 4:
-        	return parseLevel(switchLevel4)
-    	case 5:
-        	return parseLevel(switchLevel5)
-    	case 6:
-        	return parseLevel(switchLevel6)
-    	case 7:
-        	return parseLevel(switchLevel7)
-    	case 8:
-        	return parseLevel(switchLevel8)
-    	case 9:
-        	return parseLevel(switchLevel9)
-    	case 10:
-        	return parseLevel(switchLevel10)
-    	case 11:
-        	return parseLevel(switchLevel11)
-    	case 12:
-        	return parseLevel(switchLevel12)
-    	case 13:
-        	return parseLevel(switchLevel13)
-    	case 14:
-        	return parseLevel(switchLevel14)
-    	case 15:
-        	return parseLevel(switchLevel15)
-    	case 16:
-        	return parseLevel(switchLevel16)
-    	case 17:
-        	return parseLevel(switchLevel17)
-    	case 18:
-        	return parseLevel(switchLevel18)
-    	case 19:
-        	return parseLevel(switchLevel19)
-    	case 20:
-        	return parseLevel(switchLevel20)
-    }
+def setColor(selectedLight, controlIndex) {
+    def hueValue = getHue(settings["color$controlIndex"])
+    def satValue = settings["saturation$controlIndex"]
+    def colorValue = [level:null, saturation:satValue.toInteger(), hue:hueValue, alpha:1.0]
+    
+    selectedLight.setColor(colorValue)
+}
+
+def setColorTemperature(selectedLight, controlIndex) {
+	def colorTemp = settings["colorTemperature$controlIndex"]
+    selectedLight.setColorTemperature(colorTemp)
 }
 
 private parseLevel(selectedLevel) {
 	switch(selectedLevel) {
-    	case "On":
+    	case "100%":
         	return 100
         case "95%":
         	return 95
@@ -200,4 +218,94 @@ private parseLevel(selectedLevel) {
         case "Off":
         	return 0
     }
+}
+
+private getHue(colorName) {
+    def hueValue = 0.0
+    
+	if(colorName == "Red") {
+    	hueValue = 0
+    }
+    else if(colorName == "Brick Red") {
+    	hueValue = 13
+    }
+    else if(colorName == "Safety Orange") {
+    	hueValue = 26
+    }
+    else if(colorName == "Dark Orange") {
+    	hueValue = 36
+    }
+    else if(colorName == "Amber") {
+    	hueValue = 45
+    }
+    else if(colorName == "Gold") {
+    	hueValue = 53
+    }
+    else if(colorName == "Yellow") {
+    	hueValue = 61
+    }
+    else if(colorName == "Electric Lime") {
+    	hueValue = 75
+    }
+    else if(colorName == "Lawn Green") {
+    	hueValue = 89
+    }
+    else if(colorName == "Bright Green") {
+    	hueValue = 103
+    }
+    else if(colorName == "Lime") {
+    	hueValue = 124
+    }
+    else if(colorName == "Spring Green") {
+    	hueValue = 151
+    }
+    else if(colorName == "Turquoise") {
+    	hueValue = 169
+    }
+    else if(colorName == "Aqua") {
+    	hueValue = 180
+    }
+    else if(colorName == "Sky Blue") {
+    	hueValue = 196
+    }
+    else if(colorName == "Dodger Blue") {
+    	hueValue = 211
+    }
+    else if(colorName == "Navy Blue") {
+    	hueValue = 221
+    }
+    else if(colorName == "Blue") {
+    	hueValue = 238
+    }
+    else if(colorName == "Han Purple") {
+    	hueValue = 254
+    }
+    else if(colorName == "Electric Indigo") {
+    	hueValue = 266
+    }
+    else if(colorName == "Electric Purple") {
+    	hueValue = 282
+    }
+    else if(colorName == "Orchid Purple") {
+    	hueValue = 295
+    }
+	else if(colorName == "Magenta") {
+    	hueValue = 308
+    }
+    else if(colorName == "Hot Pink") {
+    	hueValue = 642
+    }
+    else if(colorName == "Deep Pink") {
+    	hueValue = 331
+    }
+    else if(colorName == "Raspberry") {
+    	hueValue = 338
+    }
+    else if(colorName == "Crimson") {
+    	hueValue = 346
+    }
+    
+    hueValue = Math.round(hueValue * 100 / 360)
+    
+    hueValue
 }
