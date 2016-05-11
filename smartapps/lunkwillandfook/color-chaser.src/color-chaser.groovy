@@ -16,22 +16,37 @@ definition(
 
 preferences {
 	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
-    	section() {
-        	input(name: "selectedColorControls", type: "capability.colorControl, capability.colorTemperature", title: "Chase these color controls", multiple: true, required: true)
-            input(name: "firstColor", type: "enum", title: "Color 1", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
-            //input(name: "firstColorSaturation", type: "number", title: "Saturation 1", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "secondColor", type: "enum", title: "Color 2", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
-            //input(name: "secondColorSaturation", type: "number", title: "Saturation 2", range:"0..100", defaultValue: 100, multiple: false, required: true)
+    	section("controls") {
+        	input(name: "selectedColorControls", type: "capability.colorControl", title: "Chase these color controls", multiple: true, required: true)
+            input(name: "selectedColorTemperatureControls", type: "capability.colorTemperature", title: "Chase these color temperature controls", multiple: true, required: true)
+        }
+    	section("first color") {
+            input(name: "firstColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
+            input(name: "firstSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "firstLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
+        }
+        section("second color") {
+            input(name: "secondColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
+            input(name: "secondSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "secondLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
+        }
+		section("third color") {
             input(name: "thirdColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            //input(name: "thirdColorSaturation", type: "number", title: "Saturation 3", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "thirdSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "thirdLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
+        }
+        section("fourth color") {
             input(name: "fourthColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            //input(name: "fourthColorSaturation", type: "number", title: "Saturation 4", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "fourthColorSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
         }
     }
+    
 	page(name: "page2", title: "Timing", uninstall: true, install: true) {
     	section() {
-        	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)", range:"1..60", multiple: false, required: true)
-            input(name: "transitionTime", type: "decimal", title: "Transition between colors for (seconds)", range:"0..3", multiple: false, required: true)
+        	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
+            input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
+            label title: "Assign a name", required: false
 	    }
 	}
 }
@@ -147,57 +162,80 @@ def initialize() {
 }
 
 def changeColor() {
-	if(atomicState.currentColorIndex == null) {
-    	atomicState.currentColorIndex = 0
-    } else if(atomicState.currentColorIndex == 2 && thirdColor == null) {
-    	atomicState.currentColorIndex = 0
-    } else if(atomicState.currentColorIndex == 3 && fourthColor == null) {
-    	atomicState.currentColorIndex = 0
-    } else if(atomicState.currentColorIndex == 4) {
-    	atomicState.currentColorIndex = 0
-    }
+	def currentMode = location.mode
     
-    atomicState.currentColorIndex = atomicState.currentColorIndex + 1
-
-    def hueValue = 0
-    //def satValue = 100.doubleValue()
-    def colorName = ""
-    switch(atomicState.currentColorIndex) {
-    	case 1:
-            //satValue = firstColorSaturation.doubleValue()
-            colorName = firstColor
-            break
-        case 2:
-            //satValue = secondColorSaturation.doubleValue()
-            colorName = secondColor
-            break
-        case 3:
-            //satValue = thirdColorSaturation.doubleValue()
-            colorName = thirdColor
-            break
-        case 4:
-            //satValue = fourthColorSaturation.doubleValue()
-            colorName = fourthColor
-            break
-    }
-    
-    if(colorName == "Soft White - Default" || colorName == "White - Concentrate" || colorName == "Daylight - Energize" || colorName == "Warm White - Relax") {
-    	def colorTemp = 2700
-        switch(colorName) {
-        	case "Warm White - Relax":
-            	colorTemp = 2700
-                break;
-            case "Cool White - Concentrate":
-            	colorTemp = 4100
-                break;
-            case "Daylight - Energize":
-            	colorTemp = 6500
-                break;
+	if(onlyForModes.contains(currentMode)) {
+        if(atomicState.currentColorIndex == null) {
+            atomicState.currentColorIndex = 0
+        } else if(atomicState.currentColorIndex == 2 && thirdColor == null) {
+            atomicState.currentColorIndex = 0
+        } else if(atomicState.currentColorIndex == 3 && fourthColor == null) {
+            atomicState.currentColorIndex = 0
+        } else if(atomicState.currentColorIndex == 4) {
+            atomicState.currentColorIndex = 0
         }
-        selectedColorControls.setColorTemperature(colorTemp, transitionTime)
-    } else {
-    	def colorValue = [level:null, saturation:100.0, hue:getHue(colorName), alpha:1.0]
-    	log.trace "Changing color to $colorName with a saturation of $satValue over $transitionTime seconds."
-    	selectedColorControls.setColor(colorValue, transitionTime)
-    }
+
+        atomicState.currentColorIndex = atomicState.currentColorIndex + 1
+
+        def hueValue = 0
+        def satValue = 100
+        def switchLevel = 100
+        def colorName = ""
+        switch(atomicState.currentColorIndex) {
+            case 1:
+                satValue = firstSaturation.doubleValue()
+                switchLevel = firstLevel
+                colorName = firstColor
+                break
+            case 2:
+                satValue = secondSaturation.doubleValue()
+                switchLevel = secondLevel
+                colorName = secondColor
+                break
+            case 3:
+                satValue = thirdSaturation.doubleValue()
+                switchLevel = thirdLevel
+                colorName = thirdColor
+                break
+            case 4:
+                satValue = fourthSaturation.doubleValue()
+                switchLevel = fourthLevel
+                colorName = fourthColor
+                break
+        }
+
+        if(colorName == "Warm White - Relax" || colorName == "Cool White - Concentrate" || colorName == "Daylight - Energize") {
+            // set the color temperature
+            def colorTemp = 2700
+            switch(colorName) {
+                case "Warm White - Relax":
+                    colorTemp = 0
+                    break;
+                case "Cool White - Concentrate":
+                    colorTemp = 50
+                    break;
+                case "Daylight - Energize":
+                    colorTemp = 100
+                    break;
+            }
+            selectedColorTemperatureControls.setColorTemperature(colorTemp)
+        } else {
+            // set the color
+            def colorValue = [level:null, saturation:satValue, hue:getHue(colorName), alpha:1.0]
+            log.trace "Changing color to $colorName with a saturation of $satValue."
+            selectedColorControls.setColor(colorValue)
+        }
+
+        // set the levels
+        selectedColorTemperatureControls.each{control->
+        	def controlCaps = control.capabilities
+			log.trace "caps: $controlCaps"
+            controlCaps.each{cap ->
+                if(cap.name == "Switch Level") {
+                    log.trace "setLevel to $switchLevel"
+                    control.setLevel(switchLevel)
+                }
+            }
+        }
+	}
 }
