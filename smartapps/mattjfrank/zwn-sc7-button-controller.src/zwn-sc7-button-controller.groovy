@@ -32,15 +32,12 @@ def selectButton() {
     section {
       input "buttonDevice", "capability.button", title: "Controller", multiple: false, required: true
     }
-
-
   }
 }
 
 def configureButton1() {
   dynamicPage(name: "configureButton1", title: "1st button, what do you want it to do?",
     nextPage: "configureButton2", uninstall: configured(), getButtonSections(1))
-
 }
 
 def configureButton2() {
@@ -78,7 +75,7 @@ def getButtonSections(buttonNumber) {
     }
     section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
       input "lights_${buttonNumber}_on", "capability.switch", title: "switches:", multiple: true, required: false
-      input(name: "lights_${buttonNumber}_level", type: "number", title: "set level to:", multiple: false, required: false, range:"(1..100)")
+      input "lights_${buttonNumber}_level", "number", title: "set level to:", multiple: false, required: false, range:"(1..100)"
       input "sonos_${buttonNumber}_on", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
     section(title: "Turn off these...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
@@ -87,18 +84,18 @@ def getButtonSections(buttonNumber) {
     }
     section(title: "Set these colors...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
       input "colors1_${buttonNumber}_lights", "capability.colorControl", title: "first lights:", multiple: true, required: false
-      input(name: "colors1_${buttonNumber}_color", type: "enum", title: "first color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-      input(name: "colors1_${buttonNumber}_saturation", type: "number", title: "first saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+      input "colors1_${buttonNumber}_color", "enum", title: "first color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+      input "colors1_${buttonNumber}_saturation", "number", title: "first saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
 	  input "colors2_${buttonNumber}_lights", "capability.colorControl", title: "second lights:", multiple: true, required: false
-      input(name: "colors2_${buttonNumber}_color", type: "enum", title: "second color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-      input(name: "colors2_${buttonNumber}_saturation", type: "number", title: "second saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+      input "colors2_${buttonNumber}_color", "enum", title: "second color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+      input "colors2_${buttonNumber}_saturation", "number", title: "second saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
 	  input "colors3_${buttonNumber}_lights", "capability.colorControl", title: "third lights:", multiple: true, required: false
-      input(name: "colors3_${buttonNumber}_color", type: "enum", title: "third color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-      input(name: "colors3_${buttonNumber}_saturation", type: "number", title: "third saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true)
+      input "colors3_${buttonNumber}_color", "enum", title: "third color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+      input "colors3_${buttonNumber}_saturation", "number", title: "third saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
     }
     section(title: "Set these color temperatures...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
       input "colorTemp_${buttonNumber}_lights", "capability.colorControl", title: "lights:", multiple: true, required: false
-      input(name: "colorTemp_${buttonNumber}_color", type: "number", title: "color temp:", range:"(2700..6500)", multiple: false, required: false)
+      input "colorTemp_${buttonNumber}_color", "number", title: "color temp:", range:"(2700..6500)", multiple: false, required: false
     }
     section(title: "Locks:", hidden: hideLocksSection(buttonNumber), hideable: true) {
       input "locks_${buttonNumber}_unlock", "capability.lock", title: "Unlock these locks:", multiple: true, required: false
@@ -494,21 +491,14 @@ def setColor(lights, colorName, saturation) {
     def hueValue = getHue(colorName)
     def satValue = saturation.toInteger()
     
-    def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
-    def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
+    def colorValue = [level:null, saturation:satValue, hue:hueValue, alpha:1.0]
     
     log.trace "Changing color to $colorName with saturation of $satValue."
     
-    lights.setColor(colorValue, null)
-    lights.setColor(colorSaturationValue, null)
+    lights.setColor(colorValue)
 }
 
-def setColorTemperature(lights, colorTemp) {
-  
-    def colorValue = [level:100, saturation:satValue, hue:hueValue, alpha:1.0]
-    def colorSaturationValue = [level:null, saturation:satValue, hue:null, alpha:1.0]
-    
+def setColorTemperature(lights, colorTemp) {  
     log.trace "Changing color temperature to $colorTemp."
-    
-    lights.setColorTemperature(colorTemp, null)
+    lights.setColorTemperature(colorTemp)
 }
