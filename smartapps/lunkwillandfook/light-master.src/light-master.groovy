@@ -60,8 +60,10 @@ def page3() {
                     if(i < 20) {
                         def colorInputName = "color$i"
                         def saturationInputName = "saturation$i"
-                        input colorInputName, "enum", title: "first color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
-                        input saturationInputName, "number", title: selectedControl.label, range: "0..100", defaultValue: 100, multiple: false, required: true
+                        def colorTitle = "${selectedControl.label} color"
+                        def saturationTitle = "${selectedControl.label} saturation"
+                        input colorInputName, "enum", title: colorTitle, options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+                        input saturationInputName, "number", title: saturationTitle, range: "0..100", defaultValue: 100, multiple: false, required: true
                         i++
                     }
                 }
