@@ -497,21 +497,10 @@ def setColor(lights, colorName, saturation) {
     def colorValue = [level:null, saturation:satValue, hue:hueValue, alpha:1.0]
     
     log.trace "Changing color for lights $lights.label to $colorName with saturation of $satValue."
-    
-    // send command twice (sometimes zigbee color changers don't take it the first time)
-    def cmd = []
-    cmd << lights.setColor(colorValue)
-   	cmd << "delay 200"
-    cmd << lights.setColor(colorValue)
-    cmd
+    lights.setColor(colorValue)
 }
 
 def setColorTemperature(lights, colorTemp) {  
     log.trace "Changing color temperature to $colorTemp."
-    
-    def cmd = []
-    cmd << lights.setColorTemperature(colorTemp)
-    cmd << "delay 200"
-    cmd << lights.setColorTemperature(colorTemp)
-    cmd
+    lights.setColorTemperature(colorTemp)
 }

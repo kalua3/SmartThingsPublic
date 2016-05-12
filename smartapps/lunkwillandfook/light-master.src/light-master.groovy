@@ -166,22 +166,12 @@ def setColor(selectedLight, controlIndex) {
     def hueValue = getHue(settings["color$controlIndex"])
     def satValue = settings["saturation$controlIndex"]
     def colorValue = [level:null, saturation:satValue.toInteger(), hue:hueValue, alpha:1.0]
-    
-    def cmd = []
-    cmd << selectedLight.setColor(colorValue)
-   	cmd << "delay 200"
-    cmd << selectedLight.setColor(colorValue)
-    cmd
+    selectedLight.setColor(colorValue)
 }
 
 def setColorTemperature(selectedLight, controlIndex) {
 	def colorTemp = settings["colorTemperature$controlIndex"]
-    
-    def cmd = []
-    cmd << selectedLight.setColorTemperature(colorTemp)
-    cmd << "delay 200"
-    cmd << selectedLight.setColorTemperature(colorTemp)
-    cmd
+    selectedLight.setColorTemperature(colorTemp)
 }
 
 private parseLevel(selectedLevel) {
