@@ -109,6 +109,7 @@ def on() {
 }
 
 def off() {
+	log.debug "turning off"
     zigbee.off()
 }
 
@@ -126,7 +127,13 @@ def setColorTemperature(value) {
     	value = (value*38) + 2700		//Calculation of mapping 0-100 to 2700-6500
     }
     
-	zigbee.setColorTemperature(value)
+    // send commands twice due to issues with some bulbs
+    def cmds = []
+    cmds << zigbee.setColorTemperature(value)
+    cmds << "delay 150"
+    cmds << zigbee.setColorTemperature(value)
+    
+    cmds
 }
 
 def setLevel(value) {
@@ -140,10 +147,24 @@ def setColor(value){
 
 def setHue(value) {
     def scaledHueValue = zigbee.convertToHexString(Math.round(value * 0xfe / 100.0), 2)
-    zigbee.command(COLOR_CONTROL_CLUSTER, HUE_COMMAND, scaledHueValue, "00", "0500")       //payload-> hue value, direction (00-> shortest distance), transition time (1/10th second) (0500 in U16 reads 5)
+    
+    // send commands twice due to issues with some bulbs
+    def cmds = []
+    cmds << zigbee.command(COLOR_CONTROL_CLUSTER, HUE_COMMAND, scaledHueValue, "00", "0500")       //payload-> hue value, direction (00-> shortest distance), transition time (1/10th second) (0500 in U16 reads 5)
+    cmds << "delay 150"
+    cmds << zigbee.command(COLOR_CONTROL_CLUSTER, HUE_COMMAND, scaledHueValue, "00", "0500")       //payload-> hue value, direction (00-> shortest distance), transition time (1/10th second) (0500 in U16 reads 5)
+    
+    cmds
 }
 
 def setSaturation(value) {
     def scaledSatValue = zigbee.convertToHexString(Math.round(value * 0xfe / 100.0), 2)
-    zigbee.command(COLOR_CONTROL_CLUSTER, SATURATION_COMMAND, scaledSatValue, "0500")      //payload-> sat value, transition time
+    
+    // send commands twice due to issues with some bulbs
+    def cmds = []
+    cmds << zigbee.command(COLOR_CONTROL_CLUSTER, SATURATION_COMMAND, scaledSatValue, "0500")      //payload-> sat value, transition time
+    cmds << "delay 150"
+    cmds << zigbee.command(COLOR_CONTROL_CLUSTER, SATURATION_COMMAND, scaledSatValue, "0500")      //payload-> sat value, transition time
+    
+    cmds
 }
