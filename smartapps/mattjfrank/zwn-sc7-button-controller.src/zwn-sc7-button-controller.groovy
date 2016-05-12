@@ -228,27 +228,6 @@ def executeHandlers(buttonNumber) {
   lights = find('lights', buttonNumber, "on")
   def level = find('lights', buttonNumber, "level")
   if (lights != null) flip(lights, "on", level)
-
-  locks = find('locks', buttonNumber, "unlock")
-  if (locks != null) flip(locks, "unlock", null)
-
-  sonos = find('sonos', buttonNumber, "on")
-  if (sonos != null) flip(sonos, "on", null)
-
-  lights = find('lights', buttonNumber, "off")
-  if (lights != null) flip(lights, "off", null)
-
-  locks = find('locks', buttonNumber, "lock")
-  if (locks != null) flip(locks, "lock", null)
-
-  sonos = find('sonos', buttonNumber, "off")
-  if (sonos != null) flip(sonos, "off", null)
-
-  def mode = find('mode', buttonNumber, "on")
-  if (mode != null) changeMode(mode)
-
-  def phrase = find('phrase', buttonNumber, "on")
-  if (phrase != null) location.helloHome.execute(phrase)
   
   def colors1Lights = find('colors1', buttonNumber, "lights")
   def colors1Color = find('colors1', buttonNumber, "color")
@@ -268,6 +247,27 @@ def executeHandlers(buttonNumber) {
   def colorTempLights = find('colorTemp', buttonNumber, "lights")
   def colorTempColor = find('colorTemp', buttonNumber, "color")
   if(colorTempLights != null && colorTempColor != null) setColorTemperature(colorTempLights, colorTempColor)
+
+  lights = find('lights', buttonNumber, "off")
+  if (lights != null) flip(lights, "off", null)
+
+  locks = find('locks', buttonNumber, "unlock")
+  if (locks != null) flip(locks, "unlock", null)
+
+  sonos = find('sonos', buttonNumber, "on")
+  if (sonos != null) flip(sonos, "on", null)
+
+  locks = find('locks', buttonNumber, "lock")
+  if (locks != null) flip(locks, "lock", null)
+
+  sonos = find('sonos', buttonNumber, "off")
+  if (sonos != null) flip(sonos, "off", null)
+
+  def mode = find('mode', buttonNumber, "on")
+  if (mode != null) changeMode(mode)
+
+  def phrase = find('phrase', buttonNumber, "on")
+  if (phrase != null) location.helloHome.execute(phrase)
 }
 
 def find(type, buttonNumber, value) {
@@ -282,15 +282,16 @@ def find(type, buttonNumber, value) {
 
 def flip(devices, newState, level) {
   log.debug "flip: $devices = ${devices*.currentValue('switch')}"
-
+  def cmd = []
+  
   if (newState == "off") {
-    devices.off()
+    cmd << devices.off()
   }
   else if (newState == "on") {
     if(level == null) {
-    	devices.on()
+    	cmd << devices.on()
     } else {
-    	devices.setLevel(level)
+    	cmd << devices.setLevel(level)
     }
   }
   else if (newState == "unlock") {
@@ -299,6 +300,8 @@ def flip(devices, newState, level) {
   else if (newState == "lock") {
     devices.lock()
   }
+  
+  cmd
 }
 
 def toggle(devices) {
@@ -493,12 +496,22 @@ def setColor(lights, colorName, saturation) {
     
     def colorValue = [level:null, saturation:satValue, hue:hueValue, alpha:1.0]
     
-    log.trace "Changing color to $colorName with saturation of $satValue."
+    log.trace "Changing color for lights $lights.label to $colorName with saturation of $satValue."
     
-    lights.setColor(colorValue)
+    // send command twice (sometimes zigbee color changers don't take it the first time)
+    def cmd = []
+    cmd << lights.setColor(colorValue)
+   	cmd << "delay 200"
+    cmd << lights.setColor(colorValue)
+    cmd
 }
 
 def setColorTemperature(lights, colorTemp) {  
     log.trace "Changing color temperature to $colorTemp."
-    lights.setColorTemperature(colorTemp)
+    
+    def cmd = []
+    cmd << lights.setColorTemperature(colorTemp)
+    cmd << "delay 200"
+    cmd << lights.setColorTemperature(colorTemp)
+    cmd
 }
