@@ -1,16 +1,16 @@
 /**
  *	Button Controller App for ZWN-SC7
  *
- *	Author: Matt Frank based on VRCS Button Controller by Brian Dahlem, based on SmartThings Button Controller
+ *	Author: Originally Matt Frank based on VRCS Button Controller by Brian Dahlem, based on SmartThings Button Controller. Updated by Jeremy Huckeba for color, phrase, and advanced level control.
  *	Date Created: 2014-12-18
- *  Last Updated: 2015-10-05
+ *  Last Updated: 2016-05-16
  *
  */
 definition(
     name: "ZWN-SC7	 Button Controller",
     namespace: "mattjfrank",
-    author: "Matt Frank, using code from Brian Dahlem",
-    description: "ZWN-SC7	 7-Button	 Scene	 Controller	Button Assignment App",
+    author: "Jeremy Huckeba, using code from Matt Frank, who used code from Brian Dahlem",
+    description: "Advanced ZWN-SC7 7-Button Scene Controller Button Assignment App",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps@2x.png"
@@ -74,8 +74,14 @@ def getButtonSections(buttonNumber) {
       input "sonos_${buttonNumber}_toggle", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
     section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
-      input "lights_${buttonNumber}_on", "capability.switch", title: "switches:", multiple: true, required: false
-      input "lights_${buttonNumber}_level", "number", title: "set level to:", multiple: false, required: false, range:"(1..100)"
+      input "lights1_${buttonNumber}_on", "capability.switch", title: "first switches:", multiple: true, required: false
+      input "lights1_${buttonNumber}_level", "number", title: "first set level to:", multiple: false, required: false, range:"(1..100)"
+      input "lights2_${buttonNumber}_on", "capability.switch", title: "secpnd switches:", multiple: true, required: false
+      input "lights2_${buttonNumber}_level", "number", title: "second set level to:", multiple: false, required: false, range:"(1..100)"
+      input "lights3_${buttonNumber}_on", "capability.switch", title: "third switches:", multiple: true, required: false
+      input "lights3_${buttonNumber}_level", "number", title: "third set level to:", multiple: false, required: false, range:"(1..100)"
+      input "lights4_${buttonNumber}_on", "capability.switch", title: "fourth switches:", multiple: true, required: false
+      input "lights4_${buttonNumber}_level", "number", title: "fourth set level to:", multiple: false, required: false, range:"(1..100)"
       input "sonos_${buttonNumber}_on", "capability.musicPlayer", title: "music players:", multiple: true, required: false
     }
     section(title: "Turn off these...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
@@ -92,6 +98,9 @@ def getButtonSections(buttonNumber) {
 	  input "colors3_${buttonNumber}_lights", "capability.colorControl", title: "third lights:", multiple: true, required: false
       input "colors3_${buttonNumber}_color", "enum", title: "third color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
       input "colors3_${buttonNumber}_saturation", "number", title: "third saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
+	  input "colors4_${buttonNumber}_lights", "capability.colorControl", title: "fourth lights:", multiple: true, required: false
+      input "colors4_${buttonNumber}_color", "enum", title: "fourth color:", options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
+      input "colors4_${buttonNumber}_saturation", "number", title: "fourth saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
     }
     section(title: "Set these color temperatures...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
       input "colorTemp_${buttonNumber}_lights", "capability.colorControl", title: "lights:", multiple: true, required: false
@@ -236,24 +245,41 @@ def executeHandlers(buttonNumber) {
   def sonos = find('sonos', buttonNumber, "toggle")
   if (sonos != null) toggle(sonos)
 
-  lights = find('lights', buttonNumber, "on")
-  def level = find('lights', buttonNumber, "level")
+  lights = find('lights1', buttonNumber, "on")
+  def level = find('lights1', buttonNumber, "level")
   if (lights != null) flip(lights, "on", level)
   
-  def colors1Lights = find('colors1', buttonNumber, "lights")
-  def colors1Color = find('colors1', buttonNumber, "color")
-  def colors1Saturation = find('colors1', buttonNumber, "saturation")
-  if(colors1Lights != null && colors1Color != null && colors1Saturation != null) setColor(colors1Lights, colors1Color, colors1Saturation)
+  lights = find('lights2', buttonNumber, "on")
+  level = find('lights2', buttonNumber, "level")
+  if (lights != null) flip(lights, "on", level)
   
-  def colors2Lights = find('colors2', buttonNumber, "lights")
-  def colors2Color = find('colors2', buttonNumber, "color")
-  def colors2Saturation = find('colors2', buttonNumber, "saturation")
-  if(colors2Lights != null && colors2Color != null && colors2Saturation != null) setColor(colors2Lights, colors2Color, colors2Saturation)
+  lights = find('lights3', buttonNumber, "on")
+  level = find('lights3', buttonNumber, "level")
+  if (lights != null) flip(lights, "on", level)
   
-  def colors3Lights = find('colors3', buttonNumber, "lights")
-  def colors3Color = find('colors3', buttonNumber, "color")
-  def colors3Saturation = find('colors3', buttonNumber, "saturation")
-  if(colors3Lights != null && colors3Color != null && colors3Saturation != null) setColor(colors3Lights, colors3Color, colors3Saturation)
+  lights = find('lights4', buttonNumber, "on")
+  level = find('lights4', buttonNumber, "level")
+  if (lights != null) flip(lights, "on", level)
+  
+  def colorsLights = find('colors1', buttonNumber, "lights")
+  def colorsColor = find('colors1', buttonNumber, "color")
+  def colorsSaturation = find('colors1', buttonNumber, "saturation")
+  if(colorsLights != null && colorsColor != null && colorsSaturation != null) setColor(colorsLights, colorsColor, colorsSaturation)
+  
+  colorsLights = find('colors2', buttonNumber, "lights")
+  colorsColor = find('colors2', buttonNumber, "color")
+  colorsSaturation = find('colors2', buttonNumber, "saturation")
+  if(colorsLights != null && colorsColor != null && colorsSaturation != null) setColor(colorsLights, colorsColor, colorsSaturation)
+  
+  colorsLights = find('colors3', buttonNumber, "lights")
+  colorsColor = find('colors3', buttonNumber, "color")
+  colorsSaturation = find('colors3', buttonNumber, "saturation")
+  if(colorsLights != null && colorsColor != null && colorsSaturation != null) setColor(colorsLights, colorsColor, colorsSaturation)
+  
+  colorsLights = find('colors4', buttonNumber, "lights")
+  colorsColor = find('colors4', buttonNumber, "color")
+  colorsSaturation = find('colors4', buttonNumber, "saturation")
+  if(colorsLights != null && colorsColor != null && colorsSaturation != null) setColor(colorsLights, colorsColor, colorsSaturation)
   
   def colorTempLights = find('colorTemp', buttonNumber, "lights")
   def colorTempColor = find('colorTemp', buttonNumber, "color")

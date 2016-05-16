@@ -32,23 +32,65 @@ preferences {
         }
 		section("third color") {
             input(name: "thirdColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            input(name: "thirdSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "thirdLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "thirdSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
+            input(name: "thirdLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
         }
         section("fourth color") {
             input(name: "fourthColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            input(name: "fourthColorSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: true)
-            input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: true)
+            input(name: "fourthColorSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
+            input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
         }
     }
-    
-	page(name: "page2", title: "Timing", uninstall: true, install: true) {
+    page(name: "page2", title: "Options", uninstall: true, nextPage: "page3")   
+	page(name: "page3", title: "Timing", uninstall: true, install: true) {
     	section() {
         	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
             input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
             label title: "Assign a name", required: false
 	    }
 	}
+}
+
+def page2() {
+  dynamicPage(name: "page2", title: "What color do you want each light to start on?",
+    install: true, uninstall: true) {
+		section("color control indicies") {
+        	if(selectedColorControls != null) {
+                def i = 0
+                selectedColorControls.each { control ->
+                    if(i < 20) {
+						input inputName, "number", title: control.label, range: getColorControlStartIndexRange(), multiple: false, required: true, defaultValue: "1"
+                    }
+                }
+            } else {
+             	paragraph "There are no color controls selected."
+            }
+        }
+		section("color temperature control indicies") {
+        	if(selectedColorTemperatureControls != null) {
+                def i = 0
+                selectedColorTemperatureControls.each { control ->
+                    if(i < 20) {
+						input inputName, "number", title: control.label, range: getColorControlStartIndexRange(), multiple: false, required: true, defaultValue: "1"
+                    }
+                }
+            } else {
+             	paragraph "There are no color controls selected."
+            }
+        }
+	}
+}
+
+def getColorControlStartIndexRange() {
+    def option = 2
+    if(thirdColor != null) {
+        range = 3
+    }
+    if(fourthColor != null) {
+        range = 4
+    }
+    
+    return range
 }
 
 def getHue(colorName) {
