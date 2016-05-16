@@ -45,7 +45,11 @@ def page3() {
                 selectedSwitches.each { selectedSwitch ->
                     if(i < 20) {
                         def inputName = "switchLevel$i"
-                        input inputName, "enum", title: selectedSwitch.label, multiple: false, required: true, options: getSwitchLevelOptions(selectedSwitch)
+                        if(selectedSwitch.hasCommand("setLevel")) {
+                        	input inputName, "number", title: selectedSwitch.label, range: "0..100", multiple: false, required: true, defaultValue: "100"
+                        } else {
+                        	input inputName, "enum", title: selectedSwitch.label, multiple: false, required: true, options: ["On", "Off"], defaultValue: "On"
+                        }
                         i++
                     }
                 }
@@ -88,15 +92,15 @@ def page3() {
     }
 }
 
-private getSwitchLevelOptions(selectedSwitch) {
-	if(selectedSwitch.hasCommand("setLevel")) {
-    	// dimmable switch options
-        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "100%" ]
-    } else {
-    	// relay switch options
-        return ["Off", "On" ]
-    }
-}
+//private getSwitchLevelOptions(selectedSwitch) {
+//	if(selectedSwitch.hasCommand("setLevel")) {
+//    	// dimmable switch options
+//        return ["Off", "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%", "65%", "70%", "75%", "80%", "85%", "90%", "95%", "100%" ]
+//    } else {
+//    	// relay switch options
+//        return ["Off", "On" ]
+//    }
+//}
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
@@ -150,11 +154,12 @@ def modeChangeHandler(evt){
 }
 
 private setSwitchLevel(selectedSwitch, levelIndex) {
-    def desiredLevel = parseLevel(settings["switchLevel$levelIndex"])
-	if(selectedSwitch.hasCommand("setLevel")) {	
+    def desiredLevel = settings["switchLevel$levelIndex"]
+    log.trace "setting switch $selectedSwitch.label to $desiredLevel"
+	if(selectedSwitch.hasCommand("setLevel")) {
         selectedSwitch.setLevel(desiredLevel)
     } else {
-    	if(desiredLevel > 0) {
+    	if(desiredLevel == "On") {
         	selectedSwitch.on()
         } else {
         	selectedSwitch.off()

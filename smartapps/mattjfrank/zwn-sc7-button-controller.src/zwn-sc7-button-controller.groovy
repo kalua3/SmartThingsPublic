@@ -104,14 +104,25 @@ def getButtonSections(buttonNumber) {
     section("Modes") {
       input "mode_${buttonNumber}_on", "mode", title: "Activate these modes:", required: false
     }
-    def phrases = location.helloHome?.getPhrases()*.label
-    if (phrases) {
+    if (getPhrases()) {
       section("Hello Home Actions") {
-        log.trace phrases
-        input "phrase_${buttonNumber}_on", "enum", title: "Activate these phrases:", required: false, options: phrases
+        input "phrase_${buttonNumber}_on", "enum", title: "Activate these phrases:", required: false, options: getPhrases()
       }
     }
   }
+}
+
+def getPhrases() {
+	def phrases = []
+    
+	location.helloHome?.getPhrases()*.label.each{phraseName ->
+    	if(phraseName != null ) { // wtf SmartThings? How is there even the possibility of a null routine?
+    		phrases << phraseName
+        }
+    }
+    
+    log.trace phrases
+    return phrases
 }
 
 def installed() {
