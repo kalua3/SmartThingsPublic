@@ -21,7 +21,7 @@ preferences {
     		label title: "Assign a name", required: false, defaultValue: "Light Master"
         }
     }
-	page(name: "page2", title: "Mode and Switches", nextPage: "page3", uninstall: true) {
+	page(name: "page2", title: "Mode and Controls", nextPage: "page3", uninstall: true) {
     	section() {
         	input "triggerMode", "mode", title: "Set for specific mode", multiple: false, required: true
             input "selectedSwitches", "capability.switch", title: "Set these switches", multiple: true, required: false
@@ -29,7 +29,7 @@ preferences {
             input "selectedColorTemperatureControls", "capability.colorTemperature", title: "Set these color temperature controls", multiple: true, required: false
 	    }
 	}
-    page(name: "page3", title: "Switch Levels", uninstall: true, nextPage: "page4")
+    page(name: "page3", title: "Control Configuration", uninstall: true, nextPage: "page4")
 	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
     	section() {
         	input "setMode", "mode", title: "Then set this mode", multiple: false, required: false
@@ -124,14 +124,6 @@ def modeChangeHandler(evt){
 	log.debug "Updated with mode: ${evt}"
     if(evt.value == triggerMode) {
     	def i = 0;
-    	selectedSwitches.each { selectedSwitch -> 
-        	if(i < 20) {
-        		setSwitchLevel(selectedSwitch, i)
-            }
-            i++
-        }
-        
-        i = 0
     	selectedColorControls.each { selectedControl -> 
         	if(i < 20) {
         		setColor(selectedControl, i)
@@ -143,6 +135,14 @@ def modeChangeHandler(evt){
     	selectedColorTemperatureControls.each { selectedControl -> 
         	if(i < 20) {
         		setColorTemperature(selectedControl, i)
+            }
+            i++
+        }
+        
+		i = 0
+    	selectedSwitches.each { selectedSwitch -> 
+        	if(i < 20) {
+        		setSwitchLevel(selectedSwitch, i)
             }
             i++
         }
