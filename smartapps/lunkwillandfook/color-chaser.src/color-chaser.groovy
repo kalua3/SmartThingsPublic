@@ -36,7 +36,7 @@ preferences {
         }
         section("fourth color") {
             input(name: "fourthColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
-            input(name: "fourthColorSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
+            input(name: "fourthSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
             input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
         }
     }
@@ -46,7 +46,7 @@ preferences {
         	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
             input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
             input(name: "onlyForSceneController", type: "device.zwnsc7EnerwaveSceneController", title: "For scene controller...", multiple: false, required: true)
-            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"], defaultValue: 1, multiple: true, required: true)
+            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"],multiple: true, required: true)
             label title: "Assign a name", required: false
 	    }
 	}
@@ -84,7 +84,7 @@ def getColorControlStartIndexRange() {
     return "1..$option"
 }
 
-def getHue(colorName) {
+def getHue(colorName, colorType) {
 	
     def hueValue = 0.0
     
@@ -170,6 +170,10 @@ def getHue(colorName) {
     	hueValue = 346
     }
     
+    if(colorType == "CIE" && hueValue > 5 && hueValue < 346) {
+    	hueValue = hueValue + 25
+    }
+    
     hueValue = Math.round(hueValue * 100 / 360)
     
     hueValue
@@ -198,8 +202,8 @@ def initialize() {
 def changeColor() {
 	def currentMode = location.mode
     log.trace "Entering color handler"
-    log.trace "currentButton for $onlyForSceneController: ${onlyForSceneController.currentButton}"
-	if(onlyForModes.contains(currentMode) && onlyForButtonNumbers.contains(onlyForSceneController.currentButton)) {
+    def isConfiguredButtonPressed = onlyForButtonNumbers.contains(onlyForSceneController.currentButton)
+	if(onlyForModes.contains(currentMode) && isConfiguredButtonPressed) {
     	def colorIndicies = [:]
         log.trace "atomicState: ${atomicState.colorIndicies}"
     	if(atomicState.colorIndicies != null) {
@@ -210,29 +214,43 @@ def changeColor() {
     	def i = 0
     	selectedColorControls.each { colorControl ->
 
+			def colorType = "RGB"
+            if(colorControl.name.toLowerCase().contains("hue")) {
+            	colorType = "CIE"
+            }
+            
 			def indexName = "currentColorIndex$i"
             def indexControlName = "colorIndex$i"
-        
-            if(colorIndicies[(indexName)] == [:]) {
-                colorIndicies << [(indexName): settings[indexControlName]]
-                log.trace "added ${settings[indexControlName]} to colorIndicies[$indexName]"
-            } else if(colorIndicies[(indexName)] == 2 && thirdColor == null) {
-                colorIndicies[(indexName)] = 0
-            } else if(colorIndicies[(indexName)] == 3 && fourthColor == null) {
-                colorIndicies[(indexName)] = 0
-            } else if(colorIndicies[(indexName)] == 4) {
-                colorIndicies[(indexName)] = 0
+        	def oldColorIndex = colorIndicies["$indexName"]
+            
+            if(oldColorIndex == null) {
+                colorIndicies.put((indexName), settings[indexControlName])
+                log.trace "added ${settings[indexControlName] - 1} to colorIndicies[$indexName]"
+            } else if(oldColorIndex == 3 && thirdColor == null) {
+            	colorIndicies["$indexName"] = 1
+                log.trace "reset colorIndicies 2"
+            } else if(oldColorIndex == 4 && fourthColor == null) {
+            	colorIndicies["$indexName"] = 1
+                log.trace "reset colorIndicies 3"
+            } else if(oldColorIndex == 5) {
+            	colorIndicies["$indexName"] = 1
+                log.trace "reset colorIndicies 4"
             }
 
 			log.trace "colorIndicies: $colorIndicies"
-			def currentColorIndex = colorIndicies[(indexName)]
+			def currentColorIndex = colorIndicies.get(indexName)
+            if(currentColorIndex == null) {
+            	currentColorIndex = colorIndicies["$indexName"]
+            }
             log.trace "currentColorIndex: $currentColorIndex"
+            colorIndicies.remove("$indexName")
             colorIndicies["$indexName"] = currentColorIndex + 1
+            //colorIndicies["$indexName"] = currentColorIndex + 1
 
             def satValue = 100
             def switchLevel = 100
             def colorName = ""
-            switch(colorIndicies[(indexName)]) {
+            switch(currentColorIndex) {
                 case 1:
                     satValue = firstSaturation.doubleValue()
                     switchLevel = firstLevel
@@ -279,16 +297,16 @@ def changeColor() {
                     }
                     colorControl.setColorTemperature(colorTemp)
                 } else {
-                    def hueValue = getHue("Red")
+                    def hueValue = getHue("Red", colorType)
                     switch(colorName) {
                         case "Warm White - Relax":
-                            hueValue = getHue("Red")
+                            hueValue = getHue("Red", colorType)
                             break;
                         case "Cool White - Concentrate":
-                            hueValue = getHue("Green")
+                            hueValue = getHue("Green", colorType)
                             break;
                         case "Daylight - Energize":
-                            hueValue = getHue("Blue")
+                            hueValue = getHue("Blue", colorType)
                             break;
                     }
                     // set the color
@@ -298,7 +316,7 @@ def changeColor() {
                 }
             } else {
             	// set the color
-                def colorValue = [level:null, saturation:satValue, hue:getHue(colorName), alpha:1.0]
+                def colorValue = [level:null, saturation:satValue, hue:getHue(colorName, colorType), alpha:1.0]
                 log.trace "Changing color to $colorName with a saturation of $satValue."
                 colorControl.setColor(colorValue)
             }
@@ -314,6 +332,8 @@ def changeColor() {
                     }
                 }
             }
+            
+            i = i + 1
 		}
         
         atomicState.colorIndicies = colorIndicies
