@@ -76,7 +76,7 @@ def getButtonSections(buttonNumber) {
     section(title: "Turn on these...", hidden: hideSection(buttonNumber, "on"), hideable: true) {
       input "lights1_${buttonNumber}_on", "capability.switch", title: "first switches:", multiple: true, required: false
       input "lights1_${buttonNumber}_level", "number", title: "first set level to:", multiple: false, required: false, range:"(1..100)"
-      input "lights2_${buttonNumber}_on", "capability.switch", title: "secpnd switches:", multiple: true, required: false
+      input "lights2_${buttonNumber}_on", "capability.switch", title: "second switches:", multiple: true, required: false
       input "lights2_${buttonNumber}_level", "number", title: "second set level to:", multiple: false, required: false, range:"(1..100)"
       input "lights3_${buttonNumber}_on", "capability.switch", title: "third switches:", multiple: true, required: false
       input "lights3_${buttonNumber}_level", "number", title: "third set level to:", multiple: false, required: false, range:"(1..100)"
@@ -167,8 +167,14 @@ def buttonConfigured(idx) {
     settings["locks_$idx_toggle"] ||
     settings["sonos_$idx_toggle"] ||
     settings["mode_$idx_on"] ||
-    settings["lights_$idx_on"] ||
-    settings["lights_$idx_level"] ||
+    settings["lights1_$idx_on"] ||
+    settings["lights1_$idx_level"] ||
+    settings["lights2_$idx_on"] ||
+    settings["lights2_$idx_level"] ||
+    settings["lights3_$idx_on"] ||
+    settings["lights3_$idx_level"] ||
+    settings["lights4_$idx_on"] ||
+    settings["lights4_$idx_level"] ||
     settings["locks_$idx_on"] ||
     settings["sonos_$idx_on"] ||
     settings["lights_$idx_off"] ||
@@ -319,23 +325,31 @@ def find(type, buttonNumber, value) {
 
 def flip(devices, newState, level) {
   log.debug "flip: $devices = ${devices*.currentValue('switch')}"
+  
   def cmd = []
   
-  if (newState == "off") {
-    cmd << devices.off()
-  }
-  else if (newState == "on") {
-    if(level == null) {
-    	cmd << devices.on()
-    } else {
-    	cmd << devices.setLevel(level)
-    }
-  }
-  else if (newState == "unlock") {
-    devices.unlock()
-  }
-  else if (newState == "lock") {
-    devices.lock()
+  devices.each { d ->
+    
+    def hasSwitchLevel = d.hasCapability("Switch Level")
+    
+    log.debug "device ${d.label} has Switch Level? ${hasSwitchLevel}"
+    
+	if (newState == "off") {
+    	cmd << d.off()
+  	}
+  	else if (newState == "on") {
+    	if(level == null || !hasSwitchLevel) {
+    		cmd << d.on()
+    	} else {
+    		cmd << d.setLevel(level)
+    	}
+  	}
+  	else if (newState == "unlock") {
+    	d.unlock()
+  	}
+  	else if (newState == "lock") {
+    	d.lock()
+  	}
   }
   
   cmd

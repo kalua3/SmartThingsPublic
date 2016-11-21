@@ -18,7 +18,6 @@ preferences {
 	page(name: "page1", title: "Welcome", nextPage: "page2", uninstall: true) {
     	section("controls") {
         	input(name: "selectedColorControls", type: "capability.colorControl", title: "Chase these color controls", multiple: true, required: true)
-            input(name: "selectedColorTemperatureControls", type: "capability.colorTemperature", title: "Chase these color temperature controls", multiple: true, required: true)
         }
     	section("first color") {
             input(name: "firstColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: true)
@@ -41,38 +40,30 @@ preferences {
             input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
         }
     }
-    page(name: "page2", title: "Options", uninstall: true, nextPage: "page3")   
+    page(name: "page2", title: "Options", uninstall: true, install: false, nextPage: "page3")   
 	page(name: "page3", title: "Timing", uninstall: true, install: true) {
     	section() {
         	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
             input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
+            input(name: "onlyForSceneController", type: "device.zwnsc7EnerwaveSceneController", title: "For scene controller...", multiple: false, required: true)
+            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"], defaultValue: 1, multiple: true, required: true)
             label title: "Assign a name", required: false
 	    }
 	}
 }
 
 def page2() {
-  dynamicPage(name: "page2", title: "What color do you want each light to start on?",
-    install: true, uninstall: true) {
+  dynamicPage(name: "page2") {
 		section("color control indicies") {
         	if(selectedColorControls != null) {
                 def i = 0
-                selectedColorControls.each { control ->
+                selectedColorControls.each { selectedControl ->
                     if(i < 20) {
-						input inputName, "number", title: control.label, range: getColorControlStartIndexRange(), multiple: false, required: true, defaultValue: "1"
+                    	def inputName = "colorIndex$i"
+                        def inputTitle = "${selectedControl.label} start index"
+						input inputName, "number", title: inputTitle, range: getColorControlStartIndexRange(), multiple: false, required: true, defaultValue: 1
                     }
-                }
-            } else {
-             	paragraph "There are no color controls selected."
-            }
-        }
-		section("color temperature control indicies") {
-        	if(selectedColorTemperatureControls != null) {
-                def i = 0
-                selectedColorTemperatureControls.each { control ->
-                    if(i < 20) {
-						input inputName, "number", title: control.label, range: getColorControlStartIndexRange(), multiple: false, required: true, defaultValue: "1"
-                    }
+                    i++
                 }
             } else {
              	paragraph "There are no color controls selected."
@@ -84,13 +75,13 @@ def page2() {
 def getColorControlStartIndexRange() {
     def option = 2
     if(thirdColor != null) {
-        range = 3
+        option = 3
     }
     if(fourthColor != null) {
-        range = 4
+        option = 4
     }
     
-    return range
+    return "1..$option"
 }
 
 def getHue(colorName) {
@@ -199,85 +190,133 @@ def updated() {
 }
 
 def initialize() {
+	atomicState.colorIndicies = null
 	def chronExpression = "0 0/${pauseOnColor} * 1/1 * ? *"
 	schedule(chronExpression, changeColor)
 }
 
 def changeColor() {
 	def currentMode = location.mode
-    
-	if(onlyForModes.contains(currentMode)) {
-        if(atomicState.currentColorIndex == null) {
-            atomicState.currentColorIndex = 0
-        } else if(atomicState.currentColorIndex == 2 && thirdColor == null) {
-            atomicState.currentColorIndex = 0
-        } else if(atomicState.currentColorIndex == 3 && fourthColor == null) {
-            atomicState.currentColorIndex = 0
-        } else if(atomicState.currentColorIndex == 4) {
-            atomicState.currentColorIndex = 0
+    log.trace "Entering color handler"
+    log.trace "currentButton for $onlyForSceneController: ${onlyForSceneController.currentButton}"
+	if(onlyForModes.contains(currentMode) && onlyForButtonNumbers.contains(onlyForSceneController.currentButton)) {
+    	def colorIndicies = [:]
+        log.trace "atomicState: ${atomicState.colorIndicies}"
+    	if(atomicState.colorIndicies != null) {
+        	colorIndicies = atomicState.colorIndicies
+            log.trace "retrieved colorIndicies from atomicState"
         }
+        
+    	def i = 0
+    	selectedColorControls.each { colorControl ->
 
-        atomicState.currentColorIndex = atomicState.currentColorIndex + 1
-
-        def hueValue = 0
-        def satValue = 100
-        def switchLevel = 100
-        def colorName = ""
-        switch(atomicState.currentColorIndex) {
-            case 1:
-                satValue = firstSaturation.doubleValue()
-                switchLevel = firstLevel
-                colorName = firstColor
-                break
-            case 2:
-                satValue = secondSaturation.doubleValue()
-                switchLevel = secondLevel
-                colorName = secondColor
-                break
-            case 3:
-                satValue = thirdSaturation.doubleValue()
-                switchLevel = thirdLevel
-                colorName = thirdColor
-                break
-            case 4:
-                satValue = fourthSaturation.doubleValue()
-                switchLevel = fourthLevel
-                colorName = fourthColor
-                break
-        }
-
-        if(colorName == "Warm White - Relax" || colorName == "Cool White - Concentrate" || colorName == "Daylight - Energize") {
-            // set the color temperature
-            def colorTemp = 2700
-            switch(colorName) {
-                case "Warm White - Relax":
-                    colorTemp = 0
-                    break;
-                case "Cool White - Concentrate":
-                    colorTemp = 50
-                    break;
-                case "Daylight - Energize":
-                    colorTemp = 100
-                    break;
+			def indexName = "currentColorIndex$i"
+            def indexControlName = "colorIndex$i"
+        
+            if(colorIndicies[(indexName)] == [:]) {
+                colorIndicies << [(indexName): settings[indexControlName]]
+                log.trace "added ${settings[indexControlName]} to colorIndicies[$indexName]"
+            } else if(colorIndicies[(indexName)] == 2 && thirdColor == null) {
+                colorIndicies[(indexName)] = 0
+            } else if(colorIndicies[(indexName)] == 3 && fourthColor == null) {
+                colorIndicies[(indexName)] = 0
+            } else if(colorIndicies[(indexName)] == 4) {
+                colorIndicies[(indexName)] = 0
             }
-            selectedColorTemperatureControls.setColorTemperature(colorTemp)
-        } else {
-            // set the color
-            def colorValue = [level:null, saturation:satValue, hue:getHue(colorName), alpha:1.0]
-            log.trace "Changing color to $colorName with a saturation of $satValue."
-            selectedColorControls.setColor(colorValue)
-        }
 
-        // set the levels
-        selectedColorTemperatureControls.each{control->
-        	def controlCaps = control.capabilities
-			log.trace "caps: $controlCaps"
-            controlCaps.each{cap ->
-                if(cap.name == "Switch Level") {
-                    log.trace "setLevel to $switchLevel"
-                    control.setLevel(switchLevel)
+			log.trace "colorIndicies: $colorIndicies"
+			def currentColorIndex = colorIndicies[(indexName)]
+            log.trace "currentColorIndex: $currentColorIndex"
+            colorIndicies["$indexName"] = currentColorIndex + 1
+
+            def satValue = 100
+            def switchLevel = 100
+            def colorName = ""
+            switch(colorIndicies[(indexName)]) {
+                case 1:
+                    satValue = firstSaturation.doubleValue()
+                    switchLevel = firstLevel
+                    colorName = firstColor
+                    break
+                case 2:
+                    satValue = secondSaturation.doubleValue()
+                    switchLevel = secondLevel
+                    colorName = secondColor
+                    break
+                case 3:
+                    satValue = thirdSaturation.doubleValue()
+                    switchLevel = thirdLevel
+                    colorName = thirdColor
+                    break
+                case 4:
+                    satValue = fourthSaturation.doubleValue()
+                    switchLevel = fourthLevel
+                    colorName = fourthColor
+                    break
+            }
+		
+            def hasColorTemperature = false
+            colorControl.capabilities.each{ capability ->
+                if(capability == "Color Temperature") {
+                    hasColorTemperature = true
                 }
             }
-        }
+        
+            if(colorName == "Warm White - Relax" || colorName == "Cool White - Concentrate" || colorName == "Daylight - Energize") {
+            	if(hasColorTemperature) {
+                    // set the color temperature
+                    def colorTemp = 2700
+                    switch(colorName) {
+                        case "Warm White - Relax":
+                            colorTemp = 0
+                            break;
+                        case "Cool White - Concentrate":
+                            colorTemp = 50
+                            break;
+                        case "Daylight - Energize":
+                            colorTemp = 100
+                            break;
+                    }
+                    colorControl.setColorTemperature(colorTemp)
+                } else {
+                    def hueValue = getHue("Red")
+                    switch(colorName) {
+                        case "Warm White - Relax":
+                            hueValue = getHue("Red")
+                            break;
+                        case "Cool White - Concentrate":
+                            hueValue = getHue("Green")
+                            break;
+                        case "Daylight - Energize":
+                            hueValue = getHue("Blue")
+                            break;
+                    }
+                    // set the color
+                    def colorValue = [level:null, saturation:2.0, hue:hueValue, alpha:1.0]
+                    log.trace "Changing color to $colorName with a saturation of $satValue."
+                    colorControl.setColor(colorValue)
+                }
+            } else {
+            	// set the color
+                def colorValue = [level:null, saturation:satValue, hue:getHue(colorName), alpha:1.0]
+                log.trace "Changing color to $colorName with a saturation of $satValue."
+                colorControl.setColor(colorValue)
+            }
+
+            // set the levels
+            colorControl.each{control->
+                def controlCaps = control.capabilities
+                log.trace "caps: $controlCaps"
+                controlCaps.each{cap ->
+                    if(cap.name == "Switch Level") {
+                        log.trace "setLevel to $switchLevel"
+                        control.setLevel(switchLevel)
+                    }
+                }
+            }
+		}
+        
+        atomicState.colorIndicies = colorIndicies
+        log.trace "added colorIndicies to atomicState"
 	}
 }
