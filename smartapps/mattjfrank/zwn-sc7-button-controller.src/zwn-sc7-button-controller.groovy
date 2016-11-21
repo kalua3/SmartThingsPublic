@@ -451,104 +451,145 @@ private integer(String s) {
   return Integer.parseInt(s)
 }
 
-def getHue(colorName) {
+def getHue(colorName, colorType) {
+	
     def hueValue = 0.0
     
 	if(colorName == "Red") {
     	hueValue = 0
     }
     else if(colorName == "Brick Red") {
-    	hueValue = 13
+    	hueValue = 2
     }
     else if(colorName == "Safety Orange") {
-    	hueValue = 26
+    	hueValue = 4
     }
     else if(colorName == "Dark Orange") {
-    	hueValue = 36
+    	hueValue = 13
     }
     else if(colorName == "Amber") {
-    	hueValue = 45
+    	hueValue = 17
     }
     else if(colorName == "Gold") {
-    	hueValue = 53
+    	hueValue = 24
     }
     else if(colorName == "Yellow") {
-    	hueValue = 61
+    	hueValue = 36
     }
     else if(colorName == "Electric Lime") {
-    	hueValue = 75
+    	hueValue = 70
     }
     else if(colorName == "Lawn Green") {
-    	hueValue = 89
+    	hueValue = 120
     }
     else if(colorName == "Bright Green") {
-    	hueValue = 103
+    	hueValue = 110
     }
     else if(colorName == "Lime") {
-    	hueValue = 124
+    	hueValue = 90
     }
     else if(colorName == "Spring Green") {
-    	hueValue = 151
+    	hueValue = 100
     }
     else if(colorName == "Turquoise") {
-    	hueValue = 169
+    	hueValue = 140
     }
     else if(colorName == "Aqua") {
-    	hueValue = 180
+        //hueValue = 169
+        hueValue = 160
     }
     else if(colorName == "Sky Blue") {
-    	hueValue = 196
+    	hueValue = 190
+    	//hueValue = 196
     }
     else if(colorName == "Dodger Blue") {
-    	hueValue = 211
+    	hueValue = 210
     }
     else if(colorName == "Navy Blue") {
-    	hueValue = 221
+    	hueValue = 240
     }
     else if(colorName == "Blue") {
-    	hueValue = 238
+    	hueValue = 230
     }
     else if(colorName == "Han Purple") {
-    	hueValue = 254
+    	//hueValue = 254
+        hueValue = 243
     }
     else if(colorName == "Electric Indigo") {
-    	hueValue = 266
+    	hueValue = 248
     }
     else if(colorName == "Electric Purple") {
-    	hueValue = 282
+    	hueValue = 252
     }
     else if(colorName == "Orchid Purple") {
-    	hueValue = 295
+    	hueValue = 263
     }
 	else if(colorName == "Magenta") {
-    	hueValue = 308
+    	hueValue = 270
     }
     else if(colorName == "Hot Pink") {
-    	hueValue = 642
+    	hueValue = 318
     }
     else if(colorName == "Deep Pink") {
     	hueValue = 331
     }
     else if(colorName == "Raspberry") {
-    	hueValue = 338
+    	hueValue = 346
     }
     else if(colorName == "Crimson") {
-    	hueValue = 346
+    	hueValue = 0
+    }
+    
+    if(colorType == "CIE") {
+    	if(hueValue > 0 && hueValue <= 6) {
+        	hueValue = hueValue + 15
+        } else if(hueValue > 6 && hueValue <= 18) {
+        	hueValue = hueValue + 25
+        } else if(hueValue > 18 && hueValue <= 35) {
+        	hueValue = hueValue + 45
+        } else if(hueValue > 35 && hueValue <= 55) {
+        	hueValue = hueValue + 60
+        } else if(hueValue > 55 && hueValue <= 115) {
+        	hueValue = hueValue + 50
+        } else if(hueValue > 115 && hueValue <= 125) {
+    		hueValue = hueValue + 20
+        } else if(hueValue > 125 && hueValue <= 168) {
+        	hueValue = hueValue + 45
+        } else if(hueValue > 168 && hueValue <= 195) {
+        	hueValue = hueValue + 30
+        } else if(hueValue > 195 && hueValue <= 240) {
+        	hueValue = hueValue + 15
+        } else if(hueValue > 240 && hueValue <= 280) {
+        	hueValue = hueValue + 18
+        } else if(hueValue > 280 && hueValue <= 300) {
+        	hueValue = hueValue + 8
+        } else if(hueValue > 300 && hueValue <= 330) {
+        	hueValue = hueValue - 15
+        } else if(hueValue > 330) {
+        	hueValue = hueValue - 30
+        }
     }
     
     hueValue = Math.round(hueValue * 100 / 360)
     
     hueValue
 }
-
 def setColor(lights, colorName, saturation) {
-    def hueValue = getHue(colorName)
-    def satValue = saturation.toInteger()
-    
-    def colorValue = [level:null, saturation:satValue, hue:hueValue, alpha:1.0]
-    
-    log.trace "Changing color for lights $lights.label to $colorName with saturation of $satValue."
-    lights.setColor(colorValue)
+    lights.each { colorControl ->
+
+        def colorType = "RGB"
+        if(colorControl.name.toLowerCase().contains("hue")) {
+            colorType = "CIE"
+        }
+        
+        def hueValue = getHue(colorName, colorType)
+        def satValue = saturation.toInteger()
+
+        def colorValue = [level:null, saturation:satValue, hue:hueValue, alpha:1.0]
+
+        log.trace "Changing color for light $colorControl.label to $colorName with saturation of $satValue."
+        colorControl.setColor(colorValue)
+	}
 }
 
 def setColorTemperature(lights, colorTemp) {  
