@@ -39,14 +39,20 @@ preferences {
             input(name: "fourthSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
             input(name: "fourthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
         }
+        section("fifth color") {
+            input(name: "fifthColor", type: "enum", title: "Color", options: ["Warm White - Relax","Cool White - Concentrate","Daylight - Energize","Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false)
+            input(name: "fifthSaturation", type: "number", title: "Saturation", range:"0..100", defaultValue: 100, multiple: false, required: false)
+            input(name: "fifthLevel", type: "number", title: "Dimmer Level", range:"1..100", defaultValue: 100, multiple: false, required: false)
+        }
     }
     page(name: "page2", title: "Options", uninstall: true, install: false, nextPage: "page3")   
 	page(name: "page3", title: "Timing", uninstall: true, install: true) {
     	section() {
         	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
             input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
-            input(name: "onlyForSceneController", type: "device.zwnsc7EnerwaveSceneController", title: "For scene controller...", multiple: false, required: true)
-            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"],multiple: true, required: true)
+            input(name: "onlyForSceneController", type: "device.zwnsc7EnerwaveSceneController", title: "For scene controller...", multiple: false, required: false)
+            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"],multiple: true, required: false)
+            input(name: "onlyForSwitches", type: "capability.switch", title: "Only when switch(es) on...", multiple: true, required: false)
             label title: "Assign a name", required: false
 	    }
 	}
@@ -128,12 +134,10 @@ def getHue(colorName, colorType) {
     	hueValue = 140
     }
     else if(colorName == "Aqua") {
-        //hueValue = 169
         hueValue = 160
     }
     else if(colorName == "Sky Blue") {
     	hueValue = 190
-    	//hueValue = 196
     }
     else if(colorName == "Dodger Blue") {
     	hueValue = 210
@@ -145,7 +149,6 @@ def getHue(colorName, colorType) {
     	hueValue = 230
     }
     else if(colorName == "Han Purple") {
-    	//hueValue = 254
         hueValue = 243
     }
     else if(colorName == "Electric Indigo") {
@@ -217,22 +220,53 @@ def installed() {
 def updated() {
 	log.debug "Updated with settings: ${settings}"
 
-	unschedule(chronExpression)
+	unschedule()
 	unsubscribe()
 	initialize()
 }
 
 def initialize() {
 	atomicState.colorIndicies = null
-	def chronExpression = "0 0/${pauseOnColor} * 1/1 * ? *"
-	schedule(chronExpression, changeColor)
+    subscribe(onlyForSwitches, "switch.on", scheduleHandler)
+    subscribe(onlyForSwitches, "switch.off", scheduleHandler)
+    subscribe(onlyForSceneController, "button", scheduleHandler)
+}
+
+def shouldRun() {
+	def result = true
+	if(onlyForSceneController != null || onlyForSwitches != null) {
+        def isConfiguredButtonPressed = onlyForSceneController == null || onlyForButtonNumbers.contains(onlyForSceneController.currentButton)
+        def isConfiguredSwitchOn = onlyForSwitches == null ? true : false
+        onlyForSwitches.each { switchControl ->
+        	def switchValue = switchControl.currentSwitch
+            if(switchValue == "on") {
+                isConfiguredSwitchOn = true
+            }
+        }
+        
+        result = isConfiguredButtonPressed && isConfiguredSwitchOn
+    }
+    
+    result
+}
+
+def scheduleHandler(evt) {
+	log.trace "schedule handler"
+    def chronExpression = "0 0/${pauseOnColor} * 1/1 * ? *"
+	if(shouldRun()) {
+    	changeColor()
+    	schedule(chronExpression, changeColor)
+    } else {
+    	unschedule(changeColor)
+        log.trace "unscheduled"
+    }
 }
 
 def changeColor() {
 	def currentMode = location.mode
     log.trace "Entering color handler"
-    def isConfiguredButtonPressed = onlyForButtonNumbers.contains(onlyForSceneController.currentButton)
-	if(onlyForModes.contains(currentMode) && isConfiguredButtonPressed) {
+    
+	if(onlyForModes.contains(currentMode) && shouldRun()) {
     	def colorIndicies = [:]
         log.trace "atomicState: ${atomicState.colorIndicies}"
     	if(atomicState.colorIndicies != null) {
@@ -257,14 +291,17 @@ def changeColor() {
                 log.trace "added ${settings[indexControlName] - 1} to colorIndicies[$indexName]"
             } else if(oldColorIndex == 3 && thirdColor == null) {
             	colorIndicies["$indexName"] = 1
-                log.trace "reset colorIndicies 2"
+                log.trace "reset colorIndicies 3"
             } else if(oldColorIndex == 4 && fourthColor == null) {
             	colorIndicies["$indexName"] = 1
-                log.trace "reset colorIndicies 3"
-            } else if(oldColorIndex == 5) {
-            	colorIndicies["$indexName"] = 1
                 log.trace "reset colorIndicies 4"
-            }
+            } else if(oldColorIndex == 5 && fifthColor == null) {
+            	colorIndicies["$indexName"] = 1
+                log.trace "reset colorIndicies 5"
+            } else if(oldColorIndex == 6) {
+            	colorIndicies["$indexName"] = 1
+                log.trace "reset colorIndicies > 5"
+            }            
 
 			log.trace "colorIndicies: $colorIndicies"
 			def currentColorIndex = colorIndicies.get(indexName)
@@ -274,7 +311,6 @@ def changeColor() {
             log.trace "currentColorIndex: $currentColorIndex"
             colorIndicies.remove("$indexName")
             colorIndicies["$indexName"] = currentColorIndex + 1
-            //colorIndicies["$indexName"] = currentColorIndex + 1
 
             def satValue = 100
             def switchLevel = 100
@@ -299,6 +335,11 @@ def changeColor() {
                     satValue = fourthSaturation.doubleValue()
                     switchLevel = fourthLevel
                     colorName = fourthColor
+                    break
+                case 5:
+                    satValue = fifthSaturation.doubleValue()
+                    switchLevel = fifthLevel
+                    colorName = fifthColor
                     break
             }
 		
