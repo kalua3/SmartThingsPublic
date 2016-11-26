@@ -232,16 +232,18 @@ def initialize() {
     subscribe(onlyForSceneController, "button", scheduleHandler)
 }
 
-def shouldRun() {
+def shouldRun(evt) {
 	def result = true
 	if(onlyForSceneController != null || onlyForSwitches != null) {
         def isConfiguredButtonPressed = onlyForSceneController == null || onlyForButtonNumbers.contains(onlyForSceneController.currentButton)
-        def isConfiguredSwitchOn = onlyForSwitches == null ? true : false
+        def isConfiguredSwitchOn = true
         onlyForSwitches.each { switchControl ->
         	def switchValue = switchControl.currentSwitch
-            if(switchValue == "on") {
-                isConfiguredSwitchOn = true
+            if(switchValue == "off") {
+                isConfiguredSwitchOn = false
             }
+            
+            log.trace "switch ${switchControl.name} is $switchValue"
         }
         
         result = isConfiguredButtonPressed && isConfiguredSwitchOn
