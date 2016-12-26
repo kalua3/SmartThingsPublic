@@ -103,7 +103,7 @@ def getButtonSections(buttonNumber) {
       input "colors4_${buttonNumber}_saturation", "number", title: "fourth saturation:", range: "0..100", defaultValue: 100, multiple: false, required: true
     }
     section(title: "Set these color temperatures...", hidden: hideSection(buttonNumber, "off"), hideable: true) {
-      input "colorTemp_${buttonNumber}_lights", "capability.colorControl", title: "lights:", multiple: true, required: false
+      input "colorTemp_${buttonNumber}_lights", "capability.colorTemperature", title: "lights:", multiple: true, required: false
       input "colorTemp_${buttonNumber}_color", "number", title: "color temp:", range:"(2700..6500)", multiple: false, required: false
     }
     section(title: "Locks:", hidden: hideLocksSection(buttonNumber), hideable: true) {
@@ -594,5 +594,7 @@ def setColor(lights, colorName, saturation) {
 
 def setColorTemperature(lights, colorTemp) {  
     log.trace "Changing color temperature to $colorTemp."
-    lights.setColorTemperature(colorTemp)
+    lights.each { colorTempControl ->
+    	colorTempControl.setColorTemperature(colorTemp)
+    }
 }
