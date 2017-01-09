@@ -43,7 +43,7 @@ def page3() {
         	if(selectedSwitches != null) {
                 def i = 0
                 selectedSwitches.each { selectedSwitch ->
-                    if(i < 20) {
+                    //if(i < 20) {
                         def inputName = "switchLevel$i"
                         if(selectedSwitch.hasCommand("setLevel")) {
                         	input inputName, "number", title: selectedSwitch.label, range: "0..100", multiple: false, required: true, defaultValue: "100"
@@ -51,7 +51,7 @@ def page3() {
                         	input inputName, "enum", title: selectedSwitch.label, multiple: false, required: true, options: ["On", "Off"], defaultValue: "On"
                         }
                         i++
-                    }
+                    //}
                 }
             } else {
              	paragraph "There are no switches selected."
@@ -61,7 +61,7 @@ def page3() {
         	if(selectedColorControls != null) {
                 def i = 0
                 selectedColorControls.each { selectedControl ->
-                    if(i < 20) {
+                    //if(i < 20) {
                         def colorInputName = "color$i"
                         def saturationInputName = "saturation$i"
                         def colorTitle = "${selectedControl.label} color"
@@ -69,7 +69,7 @@ def page3() {
                         input colorInputName, "enum", title: colorTitle, options: ["Red","Brick Red","Safety Orange","Dark Orange","Amber","Gold","Yellow","Electric Lime","Lawn Green","Bright Green","Lime","Spring Green","Turquoise","Aqua","Sky Blue","Dodger Blue","Navy Blue","Blue","Han Purple","Electric Indigo","Electric Purple","Orchid Purple","Magenta","Hot Pink","Deep Pink","Raspberry","Crimson","Red"], multiple: false, required: false
                         input saturationInputName, "number", title: saturationTitle, range: "0..100", defaultValue: 100, multiple: false, required: true
                         i++
-                    }
+                    //}
                 }
              } else {
              	paragraph "There are no color controls selected."
@@ -79,11 +79,11 @@ def page3() {
         section("color temperatures") {
         	if(selectedColorTemperatureControls != null) {
                 selectedColorTemperatureControls.each { selectedControl ->
-                    if(i < 20) {
+                    //if(i < 20) {
                         def inputName = "colorTemperature$i"
                         input inputName, "number", title: selectedControl.label, range:"(2700..6500)", multiple: false, required: false
                         i++
-                    }
+                    //}
                 }
           } else {
              	paragraph "There are no color temperature controls selected."
@@ -125,25 +125,25 @@ def modeChangeHandler(evt){
     if(evt.value == triggerMode) {
     	def i = 0;
     	selectedColorControls.each { selectedControl -> 
-        	if(i < 20) {
+        	//if(i < 20) {
         		setColor(selectedControl, i)
-            }
+            //}
             i++
         }
         
         i = 0
     	selectedColorTemperatureControls.each { selectedControl -> 
-        	if(i < 20) {
+        	//if(i < 20) {
         		setColorTemperature(selectedControl, i)
-            }
+            //}
             i++
         }
         
 		i = 0
     	selectedSwitches.each { selectedSwitch -> 
-        	if(i < 20) {
+        	//if(i < 20) {
         		setSwitchLevel(selectedSwitch, i)
-            }
+            //}
             i++
         }
         
