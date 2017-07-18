@@ -21,20 +21,31 @@ preferences {
     		label title: "Assign a name", required: false, defaultValue: "Light Master"
         }
     }
-	page(name: "page2", title: "Mode and Controls", nextPage: "page3", uninstall: true) {
-    	section() {
-        	input "triggerMode", "mode", title: "Set for specific mode", multiple: false, required: true
-            input "selectedSwitches", "capability.switch", title: "Set these switches", multiple: true, required: false
-            input "selectedColorControls", "capability.colorControl", title: "Set these color controls", multiple: true, required: false
-            input "selectedColorTemperatureControls", "capability.colorTemperature", title: "Set these color temperature controls", multiple: true, required: false
-	    }
-	}
-    page(name: "page3", title: "Control Configuration", uninstall: true, nextPage: "page4")
-	page(name: "page4", title: "Set Mode", uninstall: true, install: true) {
-    	section() {
-        	input "setMode", "mode", title: "Then set this mode", multiple: false, required: false
-	    }
-	}
+    page(name: "page2", title: "Routine and Controls", uninstall: true, nextPage: "page3")
+    page(name: "page3", title: "Control Configuration", uninstall: true, install: true)    
+    
+    preferences {
+        page(name: "selectActions")
+    }
+}
+
+def page2() {
+    dynamicPage(name: "page2") {
+        // get the available actions
+        def actions = location.helloHome?.getPhrases()*.label
+        if (actions) {
+            // sort them alphabetically
+            actions.sort()
+            section("Hello Home Actions") {
+                log.trace actions
+                // use the actions as the options for an enum input
+                input "triggerRoutine", "enum", title: "Set for specific routine", multiple: false, required: true, options: actions
+                input "selectedSwitches", "capability.switch", title: "Set these switches", multiple: true, required: false
+                input "selectedColorControls", "capability.colorControl", title: "Set these color controls", multiple: true, required: false
+                input "selectedColorTemperatureControls", "capability.colorTemperature", title: "Set these color temperature controls", multiple: true, required: false
+            }
+        }
+    }
 }
 
 def page3() {
@@ -117,12 +128,12 @@ def updated() {
 
 def initialize() {
 	log.debug "Initializing mode changed handler."
-	subscribe(location, "mode", modeChangeHandler)
+    subscribe(location, "routineExecuted", routineChangedHandler)
 }
 
-def modeChangeHandler(evt){
-	log.debug "Updated with mode: ${evt}"
-    if(evt.value == triggerMode) {
+def routineChangedHandler(evt){
+	log.debug "Updated with routine: ${evt.displayName}"
+    if(evt.displayName == triggerRoutine) {
     	def i = 0;
     	selectedColorControls.each { selectedControl -> 
         	//if(i < 20) {
@@ -146,11 +157,6 @@ def modeChangeHandler(evt){
             //}
             i++
         }
-        
-        if(setMode != null) {
-			log.trace "setMode: $setMode"
-			setLocationMode(setMode)
-    	}
     }
 }
 
