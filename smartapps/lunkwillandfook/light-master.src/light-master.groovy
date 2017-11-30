@@ -133,8 +133,16 @@ def initialize() {
 
 def routineChangedHandler(evt){
 	log.debug "Updated with routine: ${evt.displayName}"
-    if(evt.displayName == triggerRoutine) {
-    	def i = 0;
+    if(evt.displayName == triggerRoutine) {            
+		def i = 0
+    	selectedSwitches.each { selectedSwitch -> 
+        	//if(i < 20) {
+        		setSwitchLevel(selectedSwitch, i)
+            //}
+            i++
+        }
+        
+        i = 0;
     	selectedColorControls.each { selectedControl -> 
         	//if(i < 20) {
         		setColor(selectedControl, i)
@@ -146,14 +154,6 @@ def routineChangedHandler(evt){
     	selectedColorTemperatureControls.each { selectedControl -> 
         	//if(i < 20) {
         		setColorTemperature(selectedControl, i)
-            //}
-            i++
-        }
-        
-		i = 0
-    	selectedSwitches.each { selectedSwitch -> 
-        	//if(i < 20) {
-        		setSwitchLevel(selectedSwitch, i)
             //}
             i++
         }
@@ -182,7 +182,7 @@ def setColor(selectedLight, controlIndex) {
 
     def hueValue = getHue(settings["color$controlIndex"], colorType)
     def satValue = settings["saturation$controlIndex"]
-    def colorValue = [level:null, saturation:satValue.toInteger(), hue:hueValue, alpha:1.0]
+    def colorValue = [saturation:satValue.toInteger(), hue:hueValue, alpha:1.0]
     selectedLight.setColor(colorValue)
 }
 
