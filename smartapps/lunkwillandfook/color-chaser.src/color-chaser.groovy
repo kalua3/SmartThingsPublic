@@ -46,16 +46,23 @@ preferences {
         }
     }
     page(name: "page2", title: "Options", uninstall: true, install: false, nextPage: "page3")   
-	page(name: "page3", title: "Timing", uninstall: true, install: true) {
-    	section() {
+	page(name: "page3", title: "Timing", uninstall: true, install: true)
+}
+
+def page3() {
+  dynamicPage(name: "page3") {
+  	def actions = location.helloHome?.getPhrases()*.label
+    if (actions) {
+    	// sort them alphabetically
+        actions.sort()
+		section() {
         	input(name: "pauseOnColor", type: "number", title: "Stay on a color for (minutes)...", range:"1..60", multiple: false, required: true)
             input(name: "onlyForModes", type: "mode", title: "Only for mode(s)...", multiple: true, required: true)
-            input(name: "onlyForSceneController", type: "device.zwnsc7EnerwaveSceneController", title: "For scene controller...", multiple: false, required: false)
-            input(name: "onlyForButtonNumbers", type: "enum", title: "When button(s) pushed...", options:["button 1","button 2","button 3","button 4","button 5","button 6","button 7"],multiple: true, required: false)
-            input(name: "onlyForSwitches", type: "capability.switch", title: "Only when switch(es) on...", multiple: true, required: false)
+            input "triggerRoutine", "enum", title: "Set for specific routine", multiple: false, required: true, options: actions
             label title: "Assign a name", required: false
-	    }
-	}
+        }
+    }
+  }
 }
 
 def page2() {
@@ -227,29 +234,23 @@ def updated() {
 
 def initialize() {
 	atomicState.colorIndicies = null
-    subscribe(onlyForSwitches, "switch.on", scheduleHandler)
-    subscribe(onlyForSwitches, "switch.off", scheduleHandler)
-    subscribe(onlyForSceneController, "button", scheduleHandler)
+    subscribe(location, "routineExecuted", scheduleHandler)
+    subscribe(location, "mode", modeChangedHandler)
+}
+
+def modeChangedHandler(evt) {
+	if(!onlyForModes.contains(evt.value)){
+    	unschedule(changeColor)
+    }
 }
 
 def shouldRun(evt) {
-	def result = true
-	if(onlyForSceneController != null || onlyForSwitches != null) {
-        def isConfiguredButtonPressed = onlyForSceneController == null || onlyForButtonNumbers.contains(onlyForSceneController.currentButton)
-        def isConfiguredSwitchOn = true
-        onlyForSwitches.each { switchControl ->
-        	def switchValue = switchControl.currentSwitch
-            if(switchValue == "off") {
-                isConfiguredSwitchOn = false
-            }
-            
-            log.trace "switch ${switchControl.name} is $switchValue"
-        }
-        
-        result = isConfiguredButtonPressed && isConfiguredSwitchOn
+	def currentMode = location.mode
+	if(onlyForModes.contains(currentMode) && evt.displayName == triggerRoutine) {
+    	return true
     }
     
-    result
+    return false
 }
 
 def scheduleHandler(evt) {
@@ -268,7 +269,7 @@ def changeColor() {
 	def currentMode = location.mode
     log.trace "Entering color handler"
     
-	if(onlyForModes.contains(currentMode) && shouldRun()) {
+	if(shouldRun()) {
     	def colorIndicies = [:]
         log.trace "atomicState: ${atomicState.colorIndicies}"
     	if(atomicState.colorIndicies != null) {
