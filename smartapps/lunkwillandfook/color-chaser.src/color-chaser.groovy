@@ -244,9 +244,9 @@ def modeChangedHandler(evt) {
     }
 }
 
-def shouldRun(evt) {
+def shouldRun() {
 	def currentMode = location.mode
-	if(onlyForModes.contains(currentMode) && evt.displayName == triggerRoutine) {
+	if(onlyForModes.contains(currentMode) && atomicState.lastRoutineDisplayName != null && triggerRoutine == atomicState.lastRoutineDisplayName) {
     	return true
     }
     
@@ -254,7 +254,7 @@ def shouldRun(evt) {
 }
 
 def scheduleHandler(evt) {
-	log.trace "schedule handler"
+	atomicState.lastRoutineDisplayName = evt.displayName
     def chronExpression = "0 0/${pauseOnColor} * 1/1 * ? *"
 	if(shouldRun()) {
     	changeColor()
