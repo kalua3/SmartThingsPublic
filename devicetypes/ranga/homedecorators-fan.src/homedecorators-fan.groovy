@@ -95,104 +95,111 @@ metadata {
   
     tiles(scale: 2) {
     	// FAN SWITCH multiple attributes tile with actions named
-	multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
+		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
         	// All tiles must define a PRIMARY_CONTROL. Controls the background color of tile, and specifies the attribute to show on the Device list views
-		tileAttribute ("device.fanMode", key: "PRIMARY_CONTROL") {
+			tileAttribute ("device.fanMode", key: "PRIMARY_CONTROL") {
+        
                 //We can use the nextState option in state (single-attribute tiles) or attributeState (Multi-Attribute Tiles) to show 
                 //that the device is transitioning to a next state. This is useful to provide visual feedback that the device state is transitioning.
                 //When the attribute’s state does change, the tile will be updated according to the state defined for that attribute.
                 //To define a transition state, simply define a state for the transition, and reference that state using the nextState option.
               
-            attributeState "default", label:"ADJUSTING", action:"refresh.refresh", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "turningOff" //light blue bckgrd
-            attributeState "turningFour", label:"TURNING HIGH", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanFour"	//light blue bckgr
-            attributeState "fanFour", label:"HIGH", action:"fanAuto", icon:"st.Lighting.light24", backgroundColor:"#486e13", nextState: "turningAuto"			// green4 bckgrnd
-            attributeState "turningThree", label:"TURNING MED-HI", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanThree"	//light blue bckgr
-            attributeState "fanThree", label: "MED-HI", action:"fanFour", icon:"st.Lighting.light24", backgroundColor:"#558216", nextState: "turningFour"		//green3 bckground
-            attributeState "turningTwo", label:"TURNING MED", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanTwo"	//light blue bckgr
-            attributeState "fanTwo", label: "MED", action:"fanThree", icon:"st.Lighting.light24", backgroundColor:"#669c1c", nextState: "turningThree"			//green2 bckground
-            attributeState "turningOne", label:"TURNING LOW", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanOne"	//light blue bckgr
-            attributeState "fanOne", label:"LOW", action:"fanTwo", icon:"st.Lighting.light24", backgroundColor:"#79b821", nextState: "turningTwo"			//green1 bckgrnd
-            attributeState "turningAuto", label:"TURNING BREEZE", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanAuto"	//light blue bckgr
-            attributeState "fanAuto", label:"BREEZE", action:"fanOff", icon:"st.Lighting.light24", backgroundColor:"#00A0DC", nextState: "turningOff"		//blue bckgrd
-            attributeState "turningOn", label:"TURNING ON", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "turningOne"			//light blue bckgrd
-            attributeState "turningOff", label:"TURNING OFF", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanOff"	//light blue bckgr
-            attributeState "fanOff", action:"fanOne", label:"OFF", icon:"st.Lighting.light24", backgroundColor:"#ffffff", nextState: "turningOne"	//light blue bckgr
-        }
+            	attributeState "default", label:"ADJUSTING", action:"refresh.refresh", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "turningOff" //light blue bckgrd
+            	attributeState "turningFour", label:"TURNING HIGH", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanFour"	//light blue bckgr
+            	attributeState "fanFour", label:"HIGH", action:"fanAuto", icon:"st.Lighting.light24", backgroundColor:"#486e13", nextState: "turningAuto"			// green4 bckgrnd
+            	attributeState "turningThree", label:"TURNING MED-HI", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanThree"	//light blue bckgr
+            	attributeState "fanThree", label: "MED-HI", action:"fanFour", icon:"st.Lighting.light24", backgroundColor:"#558216", nextState: "turningFour"		//green3 bckground
+            	attributeState "turningTwo", label:"TURNING MED", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanTwo"	//light blue bckgr
+            	attributeState "fanTwo", label: "MED", action:"fanThree", icon:"st.Lighting.light24", backgroundColor:"#669c1c", nextState: "turningThree"			//green2 bckground
+            	attributeState "turningOne", label:"TURNING LOW", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanOne"	//light blue bckgr
+            	attributeState "fanOne", label:"LOW", action:"fanTwo", icon:"st.Lighting.light24", backgroundColor:"#79b821", nextState: "turningTwo"			//green1 bckgrnd
+            	attributeState "turningAuto", label:"TURNING BREEZE", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanAuto"	//light blue bckgr
+            	attributeState "fanAuto", label:"BREEZE", action:"fanOff", icon:"st.Lighting.light24", backgroundColor:"#00A0DC", nextState: "turningOff"		//blue bckgrd
+            	attributeState "turningOn", label:"TURNING ON", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "turningOne"			//light blue bckgrd
+            	attributeState "turningOff", label:"TURNING OFF", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "fanOff"	//light blue bckgr
+            	attributeState "fanOff", action:"fanOne", label:"OFF", icon:"st.Lighting.light24", backgroundColor:"#ffffff", nextState: "turningOne"	//light blue bckgr
+        	}
 
-           	// LIGHT control dimmer tile with slider actions  
-        tileAttribute ("device.level", key: "SLIDER_CONTROL") {
-			attributeState "level", action:"switch level.setLevel"
-		}         
-	}
+        	// LIGHT control dimmer tile with slider actions  
+        	tileAttribute ("device.level", key: "SLIDER_CONTROL") {
+				attributeState "level", action:"switch level.setLevel"
+			}         
+		}
            
-    	// LIGHT standard flat tile with actions 
-	standardTile("fanLight", "device.switch", width: 2, height: 2, decoration: "flat") {
-		state "off", label:'${name}', action: "switch.on",
-            	icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor: "#ffffff", nextState:"turningOn"
-		state "on", label:'${name}', action: "switch.off", 
-            	icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor: "#79b821", nextState:"turningOff"
-		state "turningOn",  label:"TURN ON", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor:"#79b821", nextState: "on"
-		state "turningOff", label:"TURN OFF",icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor:"#ffffff", nextState: "off" 
-	}   
+	   	// LIGHT standard flat tile with actions 
+		standardTile("fanLight", "device.switch", width: 2, height: 2, decoration: "flat") {
+			state "off", label:'${name}', action: "switch.on",
+            		icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor: "#ffffff", nextState:"turningOn"
+			state "on", label:'${name}', action: "switch.off", 
+    	        	icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor: "#79b821", nextState:"turningOff"
+			state "turningOn",  label:"TURN ON", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor:"#79b821", nextState: "on"
+			state "turningOff", label:"TURN OFF",icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Light175xfinal.png", backgroundColor:"#ffffff", nextState: "off" 
+		}   
    
-// LOW 	fanSPEED standard tile with actions 
- 	standardTile("fanOne", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
+		// LOW 	fanSPEED standard tile with actions 
+ 		standardTile("fanOne", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
         	state "default", label:"LOW", action: "fanOne", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningOne"
-		state "fanOne", label: "LOW", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningOne"
-           	state "turningOne", label:"ADJUST", action: "fanOne", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
-        }
+			state "fanOne", label: "LOW", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningOne"
+    		state "turningOne", label:"ADJUST", action: "fanOne", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
+	    }
         
-// MED 	fanSPEED standard tile with actions 		
-	standardTile("fanTwo", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
-		state "default", label:"MED", action: "fanTwo", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningTwo"
-		state "fanTwo", label: "MED", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningTwo"
-          	state "turningTwo", label:"ADJUST", action: "fanTwo", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
-        }
+		// MED 	fanSPEED standard tile with actions 		
+		standardTile("fanTwo", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
+			state "default", label:"MED", action: "fanTwo", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningTwo"
+			state "fanTwo", label: "MED", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningTwo"
+    	    state "turningTwo", label:"ADJUST", action: "fanTwo", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
+	    }
         
-// MED-HI fanSPEED standard tile with actions         
-        standardTile("fanThree", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
-		state "default", label: "MED-HI", action: "fanThree", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningThree"
-		state "fanThree", label:"MED-HI", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningThree"
-          	state "turningThree", label:"ADJUST", action: "fanThree", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
-        } 
+		// MED-HI fanSPEED standard tile with actions         
+    	standardTile("fanThree", "device.fanMode", inactiveLabel: false, width: 2, height: 2) {
+			state "default", label: "MED-HI", action: "fanThree", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningThree"
+			state "fanThree", label:"MED-HI", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningThree"
+        	state "turningThree", label:"ADJUST", action: "fanThree", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
+    	} 
         
-// HIGH  fanSPEED standard tile with actions        
-        standardTile("fanFour", "device.fanMode", inactiveLabel: false, width: 2, height:2) {
+		// HIGH  fanSPEED standard tile with actions        
+    	standardTile("fanFour", "device.fanMode", inactiveLabel: false, width: 2, height:2) {
         	state "default", label:"HIGH", action: "fanFour", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#ffffff", nextState: "turningFour"
-		state "fanFour", label:"HIGH", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningFour"
-		state "turningFour", label:"ADJUST", action: "fanFour", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
-        }
+			state "fanFour", label:"HIGH", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#79b821", nextState: "turningFour"
+			state "turningFour", label:"ADJUST", action: "fanFour", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Fan175xfinal.png", backgroundColor: "#2179b8"
+    	}
         
-// BREEZE  fanSPEED standard tile with actions        		
-	standardTile("fanBreeze", "device.fanMode", inactiveLabel: false, width:2, height:2, decoration: "flat") {
+		// BREEZE  fanSPEED standard tile with actions        		
+		standardTile("fanBreeze", "device.fanMode", inactiveLabel: false, width:2, height:2, decoration: "flat") {
         	state "default", label:"Breeze", action: "fanAuto", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Breeze175xfinal.png", backgroundColor: "#ffffff", nextState: "turningBreeze"
-		state "fanAuto", label:"Breeze", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Breeze175xfinal.png", backgroundColor: "#00A0DC", nextState: "turningBreeze"
-		state "turningBreeze", label:"ADJUST", action: "fanAuto", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Breeze175xfinal.png", backgroundColor: "#2179b8"
-	}
+			state "fanAuto", label:"Breeze", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Breeze175xfinal.png", backgroundColor: "#00A0DC", nextState: "turningBreeze"
+			state "turningBreeze", label:"ADJUST", action: "fanAuto", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/Breeze175xfinal.png", backgroundColor: "#2179b8"
+		}
 	    
-// ON-OFF  standard tile with actions 
-	standardTile("fanOff", "device.fanMode", inactiveLabel: false, width:2, height:2) {
-        	state "default", label:"FAN OFF",action: "fanOff", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/OnOff175xfinal.png", backgroundColor: "#ffffff", nextState: "turningOff"
-		state "fanOff", label:"FAN OFF", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/OnOff175xfinal.png", backgroundColor: "#79b821", nextState: "turningOff"
-            	state "turningOff", label:"ADJUST", action: "fanOff", icon:"st.Home.home30", backgroundColor: "#2179b8"
-        }	
+		// ON-OFF  standard tile with actions 
+		standardTile("fanOff", "device.fanMode", inactiveLabel: false, width:2, height:2) {
+    		state "default", label:"FAN OFF",action: "fanOff", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/OnOff175xfinal.png", backgroundColor: "#ffffff", nextState: "turningOff"
+			state "fanOff", label:"FAN OFF", action: "", icon:"https://raw.githubusercontent.com/dcoffing/SmartThingsPublic/master/devicetypes/dcoffing/hampton-bay-universal-ceiling-fan-light-controller.src/OnOff175xfinal.png", backgroundColor: "#79b821", nextState: "turningOff"
+	    	state "turningOff", label:"ADJUST", action: "fanOff", icon:"st.Home.home30", backgroundColor: "#2179b8"
+    	}	
+     
+    	standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
+		}
         
-        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-		state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
-	}
+    	// Syncronize the device capabilities that the UI provides
+    	standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+    		state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
+    	}
        
-//  the tile named "switch" will appear in the Things view 
-	main(["switch"])
+		//  the tile named "switch" will appear in the Things view 
+		main(["switch"])
         
-//  tiles listed "switch", "fanLight", etc will appear in the Device Details screen view (order is left-to-right, top-to-bottom)  
-	details(["switch", "fanLight", "fanFour", "fanThree", "fanBreeze", "fanTwo", "fanOne", "fanOff", "refresh"])
+		//  tiles listed "switch", "fanLight", etc will appear in the Device Details screen view (order is left-to-right, top-to-bottom)  
+		details(["switch", "fanLight", "fanFour", "fanThree", "fanBreeze", "fanTwo", "fanOne", "fanOff", "refresh", "configure"])
 	}
 }
 
 // Parse incoming device messages to generate events
 def parse(String description) {
 	log.debug "Parse description $description"
-        def event = zigbee.getEvent(description)
+    def event = zigbee.getEvent(description)
+    log.debug "Parse got event $getEvent"
     if (event) {
         if (event.name == "power") {
         	log.debug event
@@ -239,14 +246,17 @@ def getFanModeMap() {
 }
 
 def off() {
-    zigbee.off()
+	log.debug "off"
+    setLevel(0)
 }
 
 def on() {
-    zigbee.on()
+	log.debug "on"
+    setLevel(100)
 }
 
 def setLevel(value) {
+	log.debug "setLevel: $value"
     zigbee.setLevel(value) + (value?.toInteger() > 0 ? zigbee.on() : [])
 }
 
@@ -284,6 +294,9 @@ def configure() {
 	  "raw 0x0020 {11 00 02 1C 00 00 00}", "delay 100",
 	  "send 0x${device.deviceNetworkId} 1 1", "delay 100"
 	]
+    
+    //schedule("30 * * * * ?", zigbee.command(refresh))
+    
     return cmd + refresh()
 }
 
@@ -362,21 +375,21 @@ def getFanSpeedEvent(map) {
             break
     }
 }
-def setSpeed(speed) {
+def setFanSpeed(speed) {
+	log.debug "speed: $speed"
 	if(speed == 0) {
-    	fanOff()
+    	return fanOff()
     }
     if(speed > 0 && speed <= 25) {
-    	fanOne()
+    	return fanOne()
     }
     if(speed > 25 && speed <= 50) {
-    	fanTwo()
+    	return fanTwo()
     }
     if(speed > 50 && speed <= 75) {
-    	fanThree()
+    	return fanThree()
     }
     if(speed > 75) {
-    	fanFour()
+    	return fanFour()
     }
-    
 }
