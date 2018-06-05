@@ -106,6 +106,16 @@ def getButtonSections(buttonNumber) {
       input "colorTemp_${buttonNumber}_lights", "capability.colorTemperature", title: "lights:", multiple: true, required: false
       input "colorTemp_${buttonNumber}_color", "number", title: "color temp:", range:"(2700..6500)", multiple: false, required: false
     }
+    section(title: "Fans", hidden: hideSection(buttonNumber, "off"), hideable: true) {
+      input "fan1_${buttonNumber}_device", "capability.fanSpeed", title: "first fan:", multiple: true, required: false
+      input "fan1_${buttonNumber}_speed", "number", title: "first fan speed:", range: "0..100", defaultValue: 100, multiple: false, required: true
+      input "fan2_${buttonNumber}_device", "capability.fanSpeed", title: "second fan:", multiple: true, required: false
+      input "fan2_${buttonNumber}_speed", "number", title: "second fan speed:", range: "0..100", defaultValue: 100, multiple: false, required: true
+      input "fan3_${buttonNumber}_device", "capability.fanSpeed", title: "third fan:", multiple: true, required: false
+      input "fan3_${buttonNumber}_speed", "number", title: "third fan speed:", range: "0..100", defaultValue: 100, multiple: false, required: true
+      input "fan4_${buttonNumber}_device", "capability.fanSpeed", title: "fourth fan:", multiple: true, required: false
+      input "fan4_${buttonNumber}_speed", "number", title: "fourth fan speed:", range: "0..100", defaultValue: 100, multiple: false, required: true
+    }
     section(title: "Locks:", hidden: hideLocksSection(buttonNumber), hideable: true) {
       input "locks_${buttonNumber}_unlock", "capability.lock", title: "Unlock these locks:", multiple: true, required: false
       input "locks_${buttonNumber}_lock", "capability.lock", title: "Lock these locks:", multiple: true, required: false
@@ -192,7 +202,15 @@ def buttonConfigured(idx) {
     settings["colorTemp_$idx_lights"] ||
     settings["colorTemp_$idx_color"] ||
     settings["mode_$idx_on"] ||
-    settings["phrase_$idx_on"]
+    settings["phrase_$idx_on"] ||
+    settings["fan1_$idx_device"] ||
+    settings["fan1_$idx_speed"] ||
+    settings["fan2_$idx_device"] ||
+    settings["fan2_$idx_speed"] ||
+    settings["fan3_$idx_device"] ||
+    settings["fan3_$idx_speed"] ||
+    settings["fan4_$idx_device"] ||
+    settings["fan4_$idx_speed"]
 }
 
 def buttonEvent(evt){
@@ -266,6 +284,22 @@ def executeHandlers(buttonNumber) {
   lights = find('lights4', buttonNumber, "on")
   level = find('lights4', buttonNumber, "level")
   if (lights != null) flip(lights, "on", level)
+  
+  def fanDevices = find('fan1', buttonNumber, "device")
+  def fanSpeed = find('fan1', buttonNumber, "speed")
+  if(fanDevices != null && fanSpeed != null) fanDevices*.setFanSpeed(fanSpeed)
+  
+  fanDevices = find('fan2', buttonNumber, "device")
+  fanSpeed = find('fan2', buttonNumber, "speed")
+  if(fanDevices != null && fanSpeed != null) fanDevices*.setFanSpeed(fanSpeed)
+  
+  fanDevices = find('fan3', buttonNumber, "device")
+  fanSpeed = find('fan3', buttonNumber, "speed")
+  if(fanDevices != null && fanSpeed != null) fanDevices*.setFanSpeed(fanSpeed)
+  
+  fanDevices = find('fan4', buttonNumber, "device")
+  fanSpeed = find('fan4', buttonNumber, "speed")
+  if(fanDevices != null && fanSpeed != null) fanDevices*.setFanSpeed(fanSpeed)
   
   def colorsLights = find('colors1', buttonNumber, "lights")
   def colorsColor = find('colors1', buttonNumber, "color")
