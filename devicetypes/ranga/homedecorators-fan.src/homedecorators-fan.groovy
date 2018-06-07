@@ -211,26 +211,24 @@ def parse(String description) {
         }
     }
 	else {
-	def map = [:]
-	if (description?.startsWith("read attr -")) 
-	{
-		def descMap = zigbee.parseDescriptionAsMap(description)
-		// Fan Control Cluster Attribute Read Response
-		if (descMap.cluster == "0202" && descMap.attrId == "0000") 
-		{
-			map.name = "fanMode"
-			map.value = getFanModeMap()[descMap.value]
-		} 
-	}// End of Read Attribute Response
-	def result = null
-    def speedResult = null
-	if (map) {
-		result = createEvent(map)
-        speedResult = getFanSpeedEvent(map)
-		log.debug "Parse returned $map, $speedResult"
-	}
-	log.debug "Parse returned $map, $speedResult"
-	return [result, speedResult]
+        def map = [:]
+        if (description?.startsWith("read attr -")) 
+        {
+            def descMap = zigbee.parseDescriptionAsMap(description)
+            // Fan Control Cluster Attribute Read Response
+            if (descMap.cluster == "0202" && descMap.attrId == "0000") 
+            {
+                map.name = "fanMode"
+                map.value = getFanModeMap()[descMap.value]
+            } 
+        } // End of Read Attribute Response
+        def result = null
+        if (map) {
+            result = createEvent(map)
+            log.debug "Parse returned $map"
+        }
+        log.debug "Parse returned $map"
+        return [result]
     }
 }
 
@@ -246,21 +244,22 @@ def getFanModeMap() {
 }
 
 def off() {
-	log.debug "off"
+	log.info "off"
     setLevel(0)
 }
 
 def on() {
-	log.debug "on"
+	log.info "on"
     setLevel(100)
 }
 
 def setLevel(value) {
-	log.debug "setLevel: $value"
+	log.info "setLevel: $value"
     zigbee.setLevel(value) + (value?.toInteger() > 0 ? zigbee.on() : [])
 }
 
 def ping() {
+	log.info "ping"
     return zigbee.onOffRefresh()
 }
 
@@ -295,80 +294,91 @@ def configure() {
 	  "send 0x${device.deviceNetworkId} 1 1", "delay 100"
 	]
     
-    //schedule("30 * * * * ?", zigbee.command(refresh))
+    unschedule()
+    runEvery1Minute(refresh)
     
     return cmd + refresh()
 }
 
 def fanAuto() {
-	log.debug "auto"
+	log.info "fanAuto"
 	sendEvent("name":"fanMode", "value":"fanAuto")
+    sendFanSpeedEvent("fanAuto")
     def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {06}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {06}", "delay 2000"
     ]
     return cmds
     log.info "Turning On Breeze mode"
 }
 def fanOff() {
-	log.debug "off"
+	log.info "fanOff"
 	sendEvent("name":"fanMode", "value":"fanOff")
+    sendFanSpeedEvent("fanOff")
 	def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {00}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {00}", "delay 2000"
     ]
     return cmds
     log.info "Turning fan Off"
 }
 def fanOne() {
+	log.info "fanOne (low)"
 	sendEvent("name":"fanMode", "value":"fanOne")
+    sendFanSpeedEvent("fanOne")
     def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {01}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {01}", "delay 2000"
     ]
     return cmds
     log.info "Setting fan speed to One"
 }
 def fanTwo() {
+	log.info "fanTwo (med)"
 	sendEvent("name":"fanMode", "value":"fanTwo")
+    sendFanSpeedEvent("fanTwo")
     def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {02}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {02}", "delay 2000"
     ]
     return cmds
     log.info "Setting fan speed to Two"
 }
 def fanThree() {
+	log.info "fanThree (med-high)"
 	sendEvent("name":"fanMode", "value":"fanThree")
+    sendFanSpeedEvent("fanThree")
     def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {03}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {03}", "delay 2000"
     ]
     return cmds
     log.info "Setting fan speed to Three"
 }
 def fanFour() {
+	log.info "fanFour (high)"
 	sendEvent("name":"fanMode", "value":"fanFour")
+    sendFanSpeedEvent("fanFour")
     def cmds=[
-	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {04}"
+	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {04}", "delay 2000"
     ]
     return cmds
     log.info "Setting fan speed to Four"
 }
-def getFanSpeedEvent(map) {
-	switch(map.value) {
+def sendFanSpeedEvent(mode) {
+	switch(mode) {
     	case "fanOff":
-        	return createEvent("name":"fanSpeed", "value":0)
+        	return sendEvent("name":"fanSpeed", "value":0)
             break
         case "fanOne":
-        	return createEvent("name":"fanSpeed", "value":25)
+        	return sendEvent("name":"fanSpeed", "value":25)
             break;
         case "fanTwo":
-        	return createEvent("name":"fanSpeed", "value":50)
+        	return sendEvent("name":"fanSpeed", "value":50)
             break
         case "fanThree":
-        	return createEvent("name":"fanSpeed", "value":75)
+        	return sendEvent("name":"fanSpeed", "value":75)
             break
         case "fanFour":
-        	return createEvent("name":"fanSpeed", "value":100)
+        	return sendEvent("name":"fanSpeed", "value":100)
             break
         case "fanAuto":
-        	return createEvent("name":"fanSpeed", "value": 50)
+        	return sendEvent("name":"fanSpeed", "value": 50)
             break
         default:
         	return null
@@ -376,7 +386,7 @@ def getFanSpeedEvent(map) {
     }
 }
 def setFanSpeed(speed) {
-	log.debug "speed: $speed"
+	log.info "setFanSpeed($speed)"
 	if(speed == 0) {
     	return fanOff()
     }
