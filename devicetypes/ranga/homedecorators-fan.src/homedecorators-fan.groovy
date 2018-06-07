@@ -220,6 +220,8 @@ def parse(String description) {
             {
                 map.name = "fanMode"
                 map.value = getFanModeMap()[descMap.value]
+                sendEvent("name":map.name, "value":map.value)
+    			sendFanSpeedEvent("$map.value")
             } 
         } // End of Read Attribute Response
         def result = null
@@ -302,8 +304,6 @@ def configure() {
 
 def fanAuto() {
 	log.info "fanAuto"
-	sendEvent("name":"fanMode", "value":"fanAuto")
-    sendFanSpeedEvent("fanAuto")
     def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {06}", "delay 2000"
     ]
@@ -312,8 +312,6 @@ def fanAuto() {
 }
 def fanOff() {
 	log.info "fanOff"
-	sendEvent("name":"fanMode", "value":"fanOff")
-    sendFanSpeedEvent("fanOff")
 	def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {00}", "delay 2000"
     ]
@@ -322,8 +320,6 @@ def fanOff() {
 }
 def fanOne() {
 	log.info "fanOne (low)"
-	sendEvent("name":"fanMode", "value":"fanOne")
-    sendFanSpeedEvent("fanOne")
     def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {01}", "delay 2000"
     ]
@@ -332,8 +328,6 @@ def fanOne() {
 }
 def fanTwo() {
 	log.info "fanTwo (med)"
-	sendEvent("name":"fanMode", "value":"fanTwo")
-    sendFanSpeedEvent("fanTwo")
     def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {02}", "delay 2000"
     ]
@@ -342,8 +336,6 @@ def fanTwo() {
 }
 def fanThree() {
 	log.info "fanThree (med-high)"
-	sendEvent("name":"fanMode", "value":"fanThree")
-    sendFanSpeedEvent("fanThree")
     def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {03}", "delay 2000"
     ]
@@ -352,8 +344,6 @@ def fanThree() {
 }
 def fanFour() {
 	log.info "fanFour (high)"
-	sendEvent("name":"fanMode", "value":"fanFour")
-    sendFanSpeedEvent("fanFour")
     def cmds=[
 	"st wattr 0x${device.deviceNetworkId} 1 0x202 0 0x30 {04}", "delay 2000"
     ]
