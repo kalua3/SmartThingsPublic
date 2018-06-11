@@ -85,9 +85,10 @@ metadata {
         command "fanFour"
         command "fanAuto"
         command "setFanSpeed"
+        command "setFanMode"
         
         attribute "fanMode", "string"
-        attribute "fanSpeed", "number"
+        attribute "fanSpeed", "number" 
       
 		fingerprint profileId: "0104", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0202", outClusters: "0003, 0019", model: "HDC52EastwindFan"
     }
@@ -195,6 +196,29 @@ metadata {
 	}
 }
 
+def setFanMode(mode) {
+	switch(mode) {
+    	case "fanOff":
+        	fanOff()
+        	break;
+        case "fanOne":
+        	fanOne()
+        	break;
+        case "fanTwo":
+        	fanTwo()
+        	break;
+        case "fanThree":
+        	fanThree()
+        	break;
+        case "fanFour":
+        	fanFour()
+        	break;
+        case "fanAuto":
+        	fanAuto()
+        	break;
+    }
+}
+
 // Parse incoming device messages to generate events
 def parse(String description) {
 	log.debug "Parse description $description"
@@ -226,7 +250,6 @@ def parse(String description) {
         } // End of Read Attribute Response
         def result = null
         if (map) {
-            result = createEvent(map)
             log.debug "Parse returned $map"
         }
         log.debug "Parse returned $map"
@@ -291,7 +314,7 @@ def configure() {
       "st rattr 0x${device.deviceNetworkId} 1 0x006 0", "delay 100",
       "st rattr 0x${device.deviceNetworkId} 1 0x008 0", "delay 100",
 	  "st rattr 0x${device.deviceNetworkId} 1 0x202 0", "delay 100",
-	 //Set long poll interval
+	  //Set long poll interval
 	  "raw 0x0020 {11 00 02 1C 00 00 00}", "delay 100",
 	  "send 0x${device.deviceNetworkId} 1 1", "delay 100"
 	]
@@ -299,7 +322,7 @@ def configure() {
     unschedule()
     runEvery1Minute(refresh)
     
-    return cmd + refresh()
+    return cmd + refresh() + createEvent(map)
 }
 
 def fanAuto() {
@@ -350,24 +373,31 @@ def fanFour() {
     return cmds
     log.info "Setting fan speed to Four"
 }
+
 def sendFanSpeedEvent(mode) {
 	switch(mode) {
     	case "fanOff":
+        	sendEvent("name":"displayMode", "value":"Turn Off")
         	return sendEvent("name":"fanSpeed", "value":0)
             break
         case "fanOne":
+        	sendEvent("name":"displayMode", "value":"Low")
         	return sendEvent("name":"fanSpeed", "value":25)
             break;
         case "fanTwo":
+        	sendEvent("name":"displayMode", "value":"Medium")
         	return sendEvent("name":"fanSpeed", "value":50)
             break
         case "fanThree":
+        	sendEvent("name":"displayMode", "value":"Medium-High")
         	return sendEvent("name":"fanSpeed", "value":75)
             break
         case "fanFour":
+        	sendEvent("name":"displayMode", "value":"High")
         	return sendEvent("name":"fanSpeed", "value":100)
             break
         case "fanAuto":
+        	sendEvent("name":"displayMode", "value":"Breeze")
         	return sendEvent("name":"fanSpeed", "value": 50)
             break
         default:
@@ -375,6 +405,7 @@ def sendFanSpeedEvent(mode) {
             break
     }
 }
+
 def setFanSpeed(speed) {
 	log.info "setFanSpeed($speed)"
 	if(speed == 0) {
