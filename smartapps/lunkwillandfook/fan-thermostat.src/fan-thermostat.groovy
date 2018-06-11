@@ -62,13 +62,16 @@ def page3() {
                 selectedFans.each { selectedFan ->
                 	def speedInputName = "fanSpeed$i"
                     
-                    def supportsFanMode = false
-                    selectedFan.supportedAttributes.each { attrib ->
-                    	if(attrib.name == "fanMode") supportsFanMode = true
+                    def hasFanMode = false
+                    selectedFan.supportedAttributes.each {
+                    	if(it.name == "fanMode") {
+                        	hasFanMode = true
+                        }
                     }
                     
-                    if(supportsFanMode) {
-                    	input speedInputName, "enum", title: selectedFan.label, options: ["Turn Off", "Breeze", "Low", "Medium", "Medium-High", "High"], multiple: false, required: true, defaultValue: "Turn Off"
+                    if(hasFanMode == true && selectedFan.hasCommand("setFanMode")) {
+                    	def options = ["Turn Off","Low","Medium","Medium-High","High","Breeze"]
+                    	input speedInputName, "enum", title: selectedFan.label, options: options, multiple: false, required: true, defaultValue: "Turn Off"
                     } else {
                     	input speedInputName, "number", title: selectedFan.label, range: "0..100", multiple: false, required: true, defaultValue: "100"
                     }
@@ -116,29 +119,6 @@ def initialize() {
     }
 }
 
-def setFanMode(fan, mode) {
-	switch(mode) {
-    	case "Turn Off":
-        	fan.fanOff()
-        	break;
-        case "Low":
-        	fan.fanOne()
-        	break;
-        case "Medium":
-        	fan.fanTwo()
-        	break;
-        case "Medium-High":
-        	fan.fanThree()
-        	break;
-        case "High":
-        	fan.fanFour()
-        	break;
-        case "Breeze":
-        	fan.fanAuto()
-        	break;
-    }
-}
-
 def temperatureChangedHandler(evt) {
 	log.trace "Temperature changed for sensor: ${evt.displayName}"
     
@@ -178,9 +158,10 @@ def temperatureChangedHandler(evt) {
                     
                     fanSpeed = settings["fanSpeed$controlIndex"]
                     if(hasFanMode) {
-                    	setFanMode(selectedFan, fanSpeed)
+                    	def mode = getMode(fanSpeed)
+                        if(selectedFan.fanMode != mode) selectedFan.setFanMode(getMode(fanSpeed))
                     } else {
-                    	selectedFan.setFanSpeed(fanSpeed)
+                    	if(selectedFan.fanSpeed != fanSpeed) selectedFan.setFanSpeed(fanSpeed)
                     }
                     
                     // update triggered fan state
@@ -212,7 +193,17 @@ def temperatureChangedHandler(evt) {
             unschedule()
             def wasOneFanTriggered = false
             selectedFans.each { selectedFan ->
-                selectedFan.setFanSpeed(0)
+                def hasFanMode = false
+                selectedFan.supportedAttributes.each { attrib ->
+                    if(attrib.name == "fanMode") hasFanMode = true
+                }
+
+                if(hasFanMode) {
+                    if(selectedFan.fanMode != "fanOff") selectedFan.setFanMode("fanOff")
+                } else {
+                    if(selectedFan.fanSpeed != 0) selectedFan.setFanSpeed(0)
+                }
+                
                 wasOneFanTriggered = true
                 
                 // update triggered fan state
@@ -229,6 +220,32 @@ def temperatureChangedHandler(evt) {
         	log.trace "Fan thermostat ASD triggered. Rescheduling"
         	runOnce(atomicState.asdTime, temperatureChangedHandler(evt), [overwrite: true])
         }
+    }
+}
+
+def getMode(modeName) {
+	switch(modeName) {
+    	case "Turn Off":
+        	return "fanOff"
+            break;
+        case "Low":
+        	return "fanOne"
+        	break;
+        case "Medium":
+        	return "fanTwo"
+        	break;
+        case "Medium-High":
+        	return "fanThree"
+        	break;
+        case "High":
+        	return "fanFour"
+        	break;
+        case "Breeze":
+       		return "fanAuto"
+        	break;
+        default:
+        	return "fanOff"
+            break;
     }
 }
 
