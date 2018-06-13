@@ -197,6 +197,7 @@ metadata {
 }
 
 def setFanMode(mode) {
+	log.debug "handler setFanMode $mode"
 	switch(mode) {
     	case "fanOff":
         	fanOff()
