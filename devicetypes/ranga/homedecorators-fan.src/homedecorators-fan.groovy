@@ -234,8 +234,7 @@ def parse(String description) {
         else {
             sendEvent(event)
         }
-    }
-	else {
+    } else {
         def map = [:]
         if (description?.startsWith("read attr -")) 
         {
@@ -321,7 +320,7 @@ def configure() {
 	]
     
     unschedule()
-    runEvery1Minute(refresh)
+    runEvery5Minutes(refresh)
     
     return cmd + refresh() + createEvent(map)
 }
